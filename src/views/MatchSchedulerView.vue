@@ -7,7 +7,7 @@ const router = useRouter()
 const league = useLeagueStore()
 
 const matchData = ref({
-  gender: 'ወንድ', // default to Men, 'ሴት' for Women
+  gender: 'ወንድ',
   home_team_id: '',
   away_team_id: '',
   match_date: '',
@@ -21,21 +21,27 @@ const successMsg = ref('')
 onMounted(async () => {
   await league.fetchRounds()
   await league.fetchTeams()
+  if (league.activeRound) {
+    await league.fetchMatches(league.activeRound.id)
+  }
 })
 
-const filteredTeams = computed(() => {
-  return league.teams.filter(t => t.gender === matchData.value.gender)
-})
+const filteredTeams = computed(() =>
+  league.teams.filter(t => t.gender === matchData.value.gender)
+)
 
-const recentSchedules = computed(() => {
-  return league.matches
+const recentSchedules = computed(() =>
+  league.matches
     .filter(m => m.status === 'Pending' || m.status === 'Scheduled' || m.status === 'Completed')
-    .slice(0, 5)
-})
+    .slice(0, 6)
+)
 
 async function scheduleMatch() {
+  errorMsg.value = ''
+  successMsg.value = ''
+
   if (!league.activeRound) {
-    errorMsg.value = 'No active round found to schedule this match in.'
+    errorMsg.value = 'No active round found. Activate a round first.'
     return
   }
   if (!matchData.value.home_team_id || !matchData.value.away_team_id) {
@@ -52,208 +58,238 @@ async function scheduleMatch() {
   }
 
   submitting.value = true
-  errorMsg.value = ''
-  successMsg.value = ''
-
   try {
-    const matchDateIso = new Date(matchData.value.match_date).toISOString()
-
     await league.createMatch({
       round_id: league.activeRound.id,
       home_team_id: matchData.value.home_team_id,
       away_team_id: matchData.value.away_team_id,
-      match_date: matchDateIso,
+      match_date: new Date(matchData.value.match_date).toISOString(),
       venue: matchData.value.venue,
-      status: 'Pending'
+      status: 'Scheduled'
     })
-
-    successMsg.value = 'Match scheduled successfully! Wait a moment for UI refresh.'
-    
-    // Reset form partially
+    successMsg.value = 'Match scheduled successfully!'
     matchData.value.home_team_id = ''
     matchData.value.away_team_id = ''
+    matchData.value.match_date = ''
+    matchData.value.venue = ''
+    setTimeout(() => successMsg.value = '', 4000)
   } catch (err) {
     errorMsg.value = err.message || 'Failed to schedule match.'
   } finally {
     submitting.value = false
   }
 }
+
+const statusBadge = (status) => {
+  const map = {
+    Completed: 'bg-blue-50 text-blue-700 border-blue-200',
+    Scheduled: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    Pending:   'bg-amber-50 text-amber-700 border-amber-200',
+  }
+  return map[status] ?? map.Pending
+}
 </script>
 
 <template>
-  <div class="max-w-7xl mx-auto px-4 py-6 space-y-6 animate-fade-in pb-12">
+  <div class="max-w-5xl mx-auto px-4 py-8 animate-fade-in space-y-6">
+
     <!-- Header -->
-    <div class="flex items-center gap-4 mb-4">
-      <button @click="router.back()" class="p-2 -ml-2 rounded-xl hover:bg-tertiary text-muted hover:text-white transition-colors">
-        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+    <div class="flex items-center gap-3">
+      <button @click="router.back()" class="btn-icon">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
         </svg>
       </button>
       <div>
-        <h1 class="text-3xl font-black text-primary tracking-tight">Match Scheduler</h1>
-        <p class="text-muted text-sm mt-1 font-medium">Organize upcoming fixtures and manage the league's competitive rhythm.</p>
+        <h1 class="text-xl font-bold text-slate-900 tracking-tight">Match Scheduler</h1>
+        <p class="text-xs text-slate-400 mt-0.5">Create and publish upcoming league fixtures</p>
       </div>
     </div>
 
-    <div v-if="league.loading && league.teams.length === 0" class="glass-panel p-16 flex flex-col items-center justify-center text-muted rounded-3xl">
-      <div class="w-10 h-10 border-4 border-neon-green/30 border-t-neon-green rounded-full animate-spin mb-4"></div>
-      Loading league data...
+    <!-- Active Round Banner -->
+    <div v-if="league.activeRound" class="card px-5 py-3.5 flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse flex-shrink-0"></div>
+        <div>
+          <p class="text-xs font-bold text-slate-900">Round {{ league.activeRound.round_number }} — Season {{ league.activeRound.season_year }}</p>
+          <p class="text-[10px] text-slate-400 mt-0.5">All new fixtures will be assigned to this round</p>
+        </div>
+      </div>
+      <span class="px-2.5 py-1 text-[10px] font-bold tracking-widest uppercase rounded bg-emerald-100 text-emerald-700 border border-emerald-200">Active</span>
     </div>
 
-    <!-- Main Grid Layout -->
-    <div v-else class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-      
-      <!-- Left Column: Form -->
+    <div v-else class="card px-5 py-3.5 border-amber-200 bg-amber-50">
+      <p class="text-xs text-amber-700 font-semibold">⚠ No active round found. Please activate a round in Round Manager before scheduling matches.</p>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+      <!-- Form Card -->
       <div class="lg:col-span-8">
-        <form @submit.prevent="scheduleMatch" class="glass-panel p-8 space-y-12 rounded-[2rem] border border-teal-500/10 shadow-2xl relative overflow-hidden">
-          
-          <div class="flex justify-between items-center border-b border-teal-500/10 pb-4">
-            <h2 class="text-base font-black text-neon-green tracking-widest uppercase">Create Upcoming Matches</h2>
-            <span class="px-3 py-1 bg-tertiary border border-teal-500/20 text-[10px] text-muted font-bold tracking-widest rounded-full uppercase">Official Entry</span>
+        <form @submit.prevent="scheduleMatch" class="card p-6 space-y-5">
+
+          <div class="pb-4 border-b border-slate-100">
+            <h2 class="text-sm font-bold text-slate-900">New Fixture</h2>
+            <p class="text-xs text-slate-400 mt-0.5">Fill in all required fields to publish the match</p>
           </div>
 
-          <!-- Current Active Round Indicator -->
-          <div v-if="league.activeRound" class="p-4 rounded-xl bg-tertiary/50 border border-teal-500/10 flex items-center justify-between shadow-inner">
+          <!-- Gender Division Selector -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-2">Division</label>
+            <div class="flex gap-2">
+              <button type="button"
+                @click="matchData.gender = 'ወንድ'; matchData.home_team_id = ''; matchData.away_team_id = ''"
+                :class="['flex-1 py-2 rounded-lg text-xs font-semibold border transition-all',
+                  matchData.gender === 'ወንድ'
+                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm shadow-indigo-600/20'
+                    : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300']">
+                ♂ Men's Division
+              </button>
+              <button type="button"
+                @click="matchData.gender = 'ሴት'; matchData.home_team_id = ''; matchData.away_team_id = ''"
+                :class="['flex-1 py-2 rounded-lg text-xs font-semibold border transition-all',
+                  matchData.gender === 'ሴት'
+                    ? 'bg-rose-500 text-white border-rose-500 shadow-sm shadow-rose-500/20'
+                    : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300']">
+                ♀ Women's Division
+              </button>
+            </div>
+          </div>
+
+          <!-- Teams Row -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <span class="text-[10px] font-black text-neon-green uppercase tracking-widest mb-1 block">Target Round</span>
-              <p class="text-sm font-bold text-primary tracking-wide">Round {{ league.activeRound.round_number }} <span class="text-muted font-medium">(Season {{ league.activeRound.season_year }})</span></p>
+              <label class="block text-xs font-semibold text-slate-600 mb-1.5">Home Team</label>
+              <select v-model="matchData.home_team_id" required class="input-field">
+                <option value="" disabled>Select home team</option>
+                <option
+                  v-for="team in filteredTeams" :key="team.id" :value="team.id"
+                  :disabled="team.id === matchData.away_team_id"
+                >{{ team.name }}</option>
+              </select>
             </div>
-            <div class="w-2.5 h-2.5 rounded-full bg-neon-green animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
-          </div>
-          <div v-else class="p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/20 text-yellow-500 text-sm font-semibold text-center">
-            Warning: No active round found. You cannot schedule matches until a round is active.
-          </div>
-
-          <!-- Form Grid -->
-          <div class="space-y-8">
-            
-            <!-- Teams Grid -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-8">
-              <!-- Home Team -->
-              <div>
-                <label class="block text-[10px] font-black text-muted mb-3 uppercase tracking-widest">Team A (Home)</label>
-                <select v-model="matchData.home_team_id" required class="w-full bg-background border border-teal-500/20 rounded-xl px-5 py-4 text-primary text-sm font-bold focus:border-neon-green focus:ring-1 focus:ring-neon-green transition-all shadow-inner appearance-none outline-none">
-                  <option value="" disabled>Select Home Team</option>
-                  <option v-for="team in filteredTeams" :key="team.id" :value="team.id" :disabled="team.id === matchData.away_team_id" class="bg-secondary text-primary font-bold">
-                    {{ team.name }}
-                  </option>
-                </select>
-              </div>
-
-              <!-- Away Team -->
-              <div>
-                <label class="block text-[10px] font-black text-muted mb-3 uppercase tracking-widest">Team B (Away)</label>
-                <select v-model="matchData.away_team_id" required class="w-full bg-background border border-teal-500/20 rounded-xl px-5 py-4 text-primary text-sm font-bold focus:border-neon-green focus:ring-1 focus:ring-neon-green transition-all shadow-inner appearance-none outline-none">
-                  <option value="" disabled>Select Away Team</option>
-                  <option v-for="team in filteredTeams" :key="team.id" :value="team.id" :disabled="team.id === matchData.home_team_id" class="bg-secondary text-primary font-bold">
-                    {{ team.name }}
-                  </option>
-                </select>
-              </div>
-            </div>
-
-            <!-- Date and Venue Grid -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-8">
-              <!-- Match Date & Time -->
-              <div>
-                <label class="block text-[10px] font-black text-muted mb-3 uppercase tracking-widest">Date and Time</label>
-                <input type="datetime-local" v-model="matchData.match_date" required class="w-full bg-background border border-teal-500/20 rounded-xl px-5 py-4 text-primary text-sm font-bold focus:border-neon-green focus:ring-1 focus:ring-neon-green transition-all shadow-inner outline-none" />
-              </div>
-
-              <!-- Venue -->
-              <div>
-                <label class="block text-[10px] font-black text-muted mb-3 uppercase tracking-widest">Venue Selection</label>
-                <div class="relative">
-                  <input type="text" v-model="matchData.venue" placeholder="e.g. Haile Resort Court" class="w-full bg-background border border-teal-500/20 rounded-xl px-5 py-4 pr-12 text-primary text-sm font-bold focus:border-neon-green focus:ring-1 focus:ring-neon-green transition-all shadow-inner placeholder-muted outline-none" />
-                  <svg class="w-5 h-5 absolute right-4 top-1/2 -translate-y-1/2 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                </div>
-              </div>
-            </div>
-
-            <!-- Category (Gender) -->
             <div>
-              <label class="block text-[10px] font-black text-muted mb-3 uppercase tracking-widest">Gender Category</label>
-              <div class="grid grid-cols-2 gap-6 relative">
-                <button type="button" @click="matchData.gender = 'ወንድ'" :class="[
-                  'py-4 px-6 rounded-full text-xs font-black tracking-widest transition-all uppercase flex justify-center items-center gap-2 border',
-                  matchData.gender === 'ወንድ' ? 'bg-secondary border-neon-green text-primary shadow-[0_0_15px_rgba(16,185,129,0.15)]' : 'bg-background border-transparent text-muted hover:text-white'
-                ]">
-                  <svg v-if="matchData.gender === 'ወንድ'" class="w-4 h-4 text-neon-green" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m12-11a2 2 0 110-4 2 2 0 010 4z" /></svg> Men
-                </button>
-                <button type="button" @click="matchData.gender = 'ሴት'" :class="[
-                  'py-4 px-6 rounded-full text-xs font-black tracking-widest transition-all uppercase flex justify-center items-center gap-2 border',
-                  matchData.gender === 'ሴት' ? 'bg-secondary border-neon-green text-primary shadow-[0_0_15px_rgba(16,185,129,0.15)]' : 'bg-background border-transparent text-muted hover:text-white'
-                ]">
-                  <svg v-if="matchData.gender === 'ሴት'" class="w-4 h-4 text-neon-green" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m12-11a2 2 0 110-4 2 2 0 010 4z" /></svg> Women
-                </button>
-              </div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1.5">Away Team</label>
+              <select v-model="matchData.away_team_id" required class="input-field">
+                <option value="" disabled>Select away team</option>
+                <option
+                  v-for="team in filteredTeams" :key="team.id" :value="team.id"
+                  :disabled="team.id === matchData.home_team_id"
+                >{{ team.name }}</option>
+              </select>
             </div>
-
           </div>
 
-          <!-- Messaging -->
-          <div v-if="errorMsg" class="p-4 bg-red-500/10 border border-red-500/20 text-red-400 text-sm font-bold rounded-xl text-center">
-            {{ errorMsg }}
+          <!-- VS Badge (decorative) -->
+          <div v-if="matchData.home_team_id && matchData.away_team_id" class="flex items-center gap-3 px-4 py-3 rounded-lg bg-slate-50 border border-slate-200">
+            <span class="text-xs font-bold text-slate-700 flex-1 text-right">
+              {{ filteredTeams.find(t => t.id === matchData.home_team_id)?.name }}
+            </span>
+            <span class="px-3 py-1 rounded-full text-[9px] font-black tracking-widest bg-blue-100 text-blue-700 border border-blue-200">VS</span>
+            <span class="text-xs font-bold text-slate-700 flex-1">
+              {{ filteredTeams.find(t => t.id === matchData.away_team_id)?.name }}
+            </span>
           </div>
-          <div v-if="successMsg" class="p-4 bg-neon-green/10 border border-neon-green/20 text-neon-green text-sm font-bold rounded-xl text-center">
-            {{ successMsg }}
+
+          <!-- Date / Time & Venue -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1.5">Date & Time</label>
+              <input type="datetime-local" v-model="matchData.match_date" required class="input-field"/>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1.5">Venue <span class="text-slate-400 font-normal">(optional)</span></label>
+              <input type="text" v-model="matchData.venue" placeholder="e.g. Haile Resort Court" class="input-field"/>
+            </div>
           </div>
+
+          <!-- Feedback -->
+          <Transition name="fade">
+            <div v-if="errorMsg" class="px-4 py-3 rounded-lg bg-red-50 border border-red-200">
+              <p class="text-xs text-red-600 font-semibold">{{ errorMsg }}</p>
+            </div>
+          </Transition>
+          <Transition name="fade">
+            <div v-if="successMsg" class="flex items-center gap-2 px-4 py-3 rounded-lg bg-emerald-50 border border-emerald-200">
+              <svg class="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+              <p class="text-xs text-emerald-700 font-semibold">{{ successMsg }}</p>
+            </div>
+          </Transition>
 
           <!-- Submit -->
-          <div class="pt-4">
-            <button type="submit" :disabled="submitting || !league.activeRound" class="w-full py-5 rounded-full bg-gradient-neon text-white font-black tracking-widest uppercase transition-all shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:shadow-[0_0_30px_rgba(16,185,129,0.5)] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center relative overflow-hidden group">
-              <span v-if="submitting" class="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-              <span v-else class="text-xs">Publish Match Schedule</span>
+          <div class="flex items-center justify-between pt-2 border-t border-slate-100">
+            <p class="text-[10px] text-slate-400">Match will be added to Round {{ league.activeRound?.round_number }}</p>
+            <button
+              type="submit"
+              :disabled="submitting || !league.activeRound"
+              class="btn-primary px-5 py-2.5 shadow-sm shadow-blue-600/20 disabled:opacity-40"
+            >
+              <svg v-if="submitting" class="animate-spin w-3.5 h-3.5" viewBox="0 0 24 24" fill="none">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+              </svg>
+              <svg v-else class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+              </svg>
+              {{ submitting ? 'Scheduling…' : 'Schedule Match' }}
             </button>
           </div>
-
         </form>
       </div>
 
-      <!-- Right Column: Recent Schedules Sidebar -->
+      <!-- Recent Schedules Sidebar -->
       <div class="lg:col-span-4">
-        <div class="glass-panel p-6 space-y-6 rounded-[2rem] border border-teal-500/10 shadow-lg min-h-full">
-          
-          <div class="flex items-center gap-2 mb-6">
-            <svg class="w-5 h-5 text-ebf-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-            <h2 class="text-base font-black text-primary tracking-wide">Recent Schedules</h2>
+        <div class="card overflow-hidden h-full">
+          <div class="px-5 py-4 bg-slate-50 border-b border-slate-200 flex items-center gap-2">
+            <svg class="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+            <p class="text-xs font-bold text-slate-600 uppercase tracking-widest">Scheduled Fixtures</p>
           </div>
 
-          <div class="space-y-4">
-            <div v-for="match in recentSchedules" :key="match.match_id" class="p-4 rounded-xl border border-teal-500/20 bg-background/50 hover:bg-background transition-colors relative overflow-hidden group">
-              
-              <div class="absolute inset-y-0 left-0 w-1 rounded-l-xl" :class="match.status === 'Completed' ? 'bg-yellow-500' : (match.status === 'Pending' ? 'bg-neon-green' : 'bg-gray-500')"></div>
-              
-              <div class="flex justify-between items-center mb-3">
-                <span class="px-2 py-0.5 rounded text-[8px] font-black tracking-widest uppercase" :class="match.status === 'Completed' ? 'bg-yellow-500/20 text-yellow-500' : (match.status === 'Pending' ? 'bg-neon-green/20 text-neon-green' : 'bg-gray-500/20 text-gray-400')">
-                  {{ match.status === 'Pending' ? 'SCHEDULED' : match.status }}
+          <div class="divide-y divide-slate-100">
+            <div
+              v-for="match in recentSchedules"
+              :key="match.id"
+              class="px-5 py-3.5 hover:bg-slate-50 transition-colors"
+            >
+              <div class="flex items-center justify-between mb-1">
+                <span :class="['text-[9px] font-bold px-2 py-0.5 rounded border uppercase tracking-widest', statusBadge(match.status)]">
+                  {{ match.status }}
                 </span>
-                <span class="text-[9px] text-muted font-bold">{{ match.match_date ? new Date(match.match_date).toLocaleString('en-GB',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '' }}</span>
+                <span class="text-[10px] text-slate-400">
+                  {{ match.match_date ? new Date(match.match_date).toLocaleDateString('en-GB', { day:'numeric', month:'short' }) : '—' }}
+                </span>
               </div>
-
-              <div class="flex justify-between items-center">
-                <p class="text-xs font-black text-primary leading-tight text-right w-[40%]">{{ match.home_team.team_name }}</p>
-                <span class="text-[9px] text-muted italic font-black w-[10%] text-center">VS</span>
-                <p class="text-xs font-black text-primary leading-tight w-[40%] text-left">{{ match.away_team.team_name }}</p>
-              </div>
-
-              <div class="mt-4 flex items-center gap-1 opacity-70">
-                <svg class="w-3 h-3 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                <span class="text-[9px] font-bold text-muted truncate">{{ match.venue || 'No Venue' }}</span>
-              </div>
+              <p class="text-xs font-semibold text-slate-900 leading-snug">
+                {{ match.home_team?.name }} <span class="text-slate-400 font-normal">vs</span> {{ match.away_team?.name }}
+              </p>
+              <p v-if="match.venue" class="text-[10px] text-slate-400 mt-0.5 truncate">📍 {{ match.venue }}</p>
             </div>
 
-            <div v-if="!recentSchedules.length" class="text-center py-6 text-xs text-muted font-medium">
-              No recent schedules exist to display.
+            <div v-if="!recentSchedules.length" class="px-5 py-10 text-center">
+              <p class="text-xs text-slate-400">No fixtures scheduled yet.</p>
             </div>
           </div>
-          
-          <div class="pt-6 border-t border-teal-500/10 flex justify-center">
-             <RouterLink to="/matches" class="text-[10px] font-bold text-muted hover:text-white uppercase tracking-widest transition-colors py-2 px-6 rounded-full border border-teal-500/20 hover:border-teal-500/50">View Full League Calendar</RouterLink>
-          </div>
 
+          <div class="px-5 py-3.5 border-t border-slate-100 bg-slate-50">
+            <RouterLink to="/matches" class="text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors flex items-center gap-1.5">
+              View full calendar
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+              </svg>
+            </RouterLink>
+          </div>
         </div>
       </div>
     </div>
   </div>
 </template>
+
+<style scoped>
+.fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
+</style>
