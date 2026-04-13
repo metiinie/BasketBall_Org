@@ -6,9 +6,10 @@ const props = defineProps({
 const emit = defineEmits(['edit-score'])
 
 const statusConfig = {
-  Scheduled:  { label: 'Scheduled', cls: 'badge-pending' },
-  Completed:  { label: 'Final',     cls: 'badge-completed' },
-  Forfeited:  { label: 'Forfeit',   cls: 'badge-loss' },
+  Scheduled: { label: 'Scheduled', cls: 'badge-pending' },
+  Pending:   { label: 'Scheduled', cls: 'badge-pending' },
+  Completed: { label: 'Final',     cls: 'badge-completed' },
+  Forfeited: { label: 'Forfeit',   cls: 'badge-loss' },
 }
 
 function teamInitial(team) {
@@ -17,25 +18,26 @@ function teamInitial(team) {
 
 function formattedDateTime(dateStr) {
   if (!dateStr) return null
-  return new Date(dateStr).toLocaleString('en-GB', { 
+  return new Date(dateStr).toLocaleString('en-GB', {
     day: '2-digit', month: 'short', year: 'numeric',
-    hour: '2-digit', minute: '2-digit'
+    hour: '2-digit', minute: '2-digit',
   })
 }
 </script>
 
 <template>
-  <div class="card p-4 hover:border-blue-200 hover:shadow-md transition-all duration-200 group bg-white">
+  <div class="card p-4 hover:shadow-md transition-all duration-200 group">
     <div class="flex items-center gap-3">
 
       <!-- Home Team -->
       <div class="flex-1 flex flex-col items-end gap-1.5">
         <div class="flex items-center gap-3">
-          <span class="text-sm font-bold text-slate-900 text-right leading-tight">
+          <span class="text-sm font-bold text-right leading-tight" style="color: var(--text-primary);">
             {{ match.home_team?.name || '—' }}
           </span>
-          <div class="w-10 h-10 rounded-full flex-shrink-0 overflow-hidden bg-slate-100 border border-slate-200 flex items-center justify-center font-bold text-sm text-slate-500">
-            <img v-if="match.home_team?.logo_url" :src="match.home_team.logo_url" class="w-full h-full object-cover" />
+          <div class="w-10 h-10 rounded-full flex-shrink-0 overflow-hidden flex items-center justify-center font-bold text-sm"
+            style="background-color: var(--bg-surface); border: 1px solid var(--border); color: var(--text-muted);">
+            <img v-if="match.home_team?.logo_url" :src="match.home_team.logo_url" class="w-full h-full object-cover"/>
             <span v-else>{{ teamInitial(match.home_team) }}</span>
           </div>
         </div>
@@ -44,22 +46,22 @@ function formattedDateTime(dateStr) {
       <!-- Score / VS -->
       <div class="flex flex-col items-center gap-1 flex-shrink-0 min-w-[80px]">
         <div v-if="match.status === 'Completed'" class="flex items-center gap-2">
-          <span class="text-2xl font-black text-slate-900 tabular-nums">{{ match.home_score }}</span>
-          <span class="text-slate-400 font-bold text-lg">–</span>
-          <span class="text-2xl font-black text-slate-900 tabular-nums">{{ match.away_score }}</span>
+          <span class="text-2xl font-black tabular-nums" style="color: var(--text-primary);">{{ match.home_score }}</span>
+          <span class="font-bold text-lg" style="color: var(--text-muted);">–</span>
+          <span class="text-2xl font-black tabular-nums" style="color: var(--text-primary);">{{ match.away_score }}</span>
         </div>
-        <div v-else class="text-base font-bold text-slate-400">VS</div>
+        <div v-else class="text-base font-bold" style="color: var(--text-muted);">VS</div>
         <span :class="statusConfig[match.status]?.cls || 'badge-pending'" class="text-[10px] px-2 py-0.5 rounded-full font-bold">
           {{ statusConfig[match.status]?.label || match.status }}
         </span>
         <div class="flex flex-col items-center mt-1">
-          <span v-if="formattedDateTime(match.match_date)" class="text-[10px] text-slate-500 font-medium">
+          <span v-if="formattedDateTime(match.match_date)" class="text-[10px] font-medium" style="color: var(--text-secondary);">
             {{ formattedDateTime(match.match_date) }}
           </span>
-          <span v-if="match.venue" class="text-[10px] text-slate-400 mt-0.5 flex items-center gap-0.5">
+          <span v-if="match.venue" class="text-[10px] mt-0.5 flex items-center gap-0.5" style="color: var(--text-muted);">
             <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
             </svg>
             {{ match.venue }}
           </span>
@@ -69,11 +71,12 @@ function formattedDateTime(dateStr) {
       <!-- Away Team -->
       <div class="flex-1 flex flex-col items-start gap-1.5">
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-full flex-shrink-0 overflow-hidden bg-slate-100 border border-slate-200 flex items-center justify-center font-bold text-sm text-slate-500">
-            <img v-if="match.away_team?.logo_url" :src="match.away_team.logo_url" class="w-full h-full object-cover" />
+          <div class="w-10 h-10 rounded-full flex-shrink-0 overflow-hidden flex items-center justify-center font-bold text-sm"
+            style="background-color: var(--bg-surface); border: 1px solid var(--border); color: var(--text-muted);">
+            <img v-if="match.away_team?.logo_url" :src="match.away_team.logo_url" class="w-full h-full object-cover"/>
             <span v-else>{{ teamInitial(match.away_team) }}</span>
           </div>
-          <span class="text-sm font-bold text-slate-900 leading-tight">
+          <span class="text-sm font-bold leading-tight" style="color: var(--text-primary);">
             {{ match.away_team?.name || '—' }}
           </span>
         </div>
@@ -81,11 +84,11 @@ function formattedDateTime(dateStr) {
 
     </div>
 
-    <!-- Edit button (admin only) -->
-    <div v-if="showActions" class="mt-4 pt-3 border-t border-slate-100 flex justify-center">
+    <!-- Edit Button -->
+    <div v-if="showActions" class="mt-4 pt-3 flex justify-center" style="border-top: 1px solid var(--border);">
       <button
         @click="emit('edit-score', match)"
-        class="text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors flex items-center gap-1.5"
+        class="text-xs font-semibold text-blue-500 hover:text-blue-400 transition-colors flex items-center gap-1.5"
       >
         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
