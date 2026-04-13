@@ -6,11 +6,24 @@ import AppHeader from '@/components/AppHeader.vue'
 import { useAuthStore } from '@/stores/auth.js'
 
 const authStore = useAuthStore()
-onMounted(() => authStore.initAuth())
+
+onMounted(() => {
+  authStore.initAuth()
+  // Restore saved theme on app boot
+  const saved = localStorage.getItem('ebf-theme')
+  if (saved === 'dark') {
+    document.documentElement.classList.add('dark')
+  } else {
+    document.documentElement.classList.remove('dark')
+  }
+})
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col md:flex-row w-full overflow-hidden bg-slate-50 text-slate-900 transition-colors duration-300">
+  <div
+    class="min-h-screen flex flex-col md:flex-row w-full overflow-hidden transition-colors duration-300"
+    style="background-color: var(--bg-app); color: var(--text-primary);"
+  >
     <AppSidebar />
     <div class="flex-1 flex flex-col h-screen overflow-y-auto w-full">
       <AppHeader />
