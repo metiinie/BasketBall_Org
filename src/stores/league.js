@@ -1,0 +1,205 @@
+import { defineStore } from 'pinia'
+import { ref, computed } from 'vue'
+import { supabase } from '@/lib/supabase.js'
+import { calculateStandings } from '@/utils/standings.js'
+
+export const useLeagueStore = defineStore('league', () => {
+  const teams = ref([])
+  const rounds = ref([])
+  const activeRound = ref(null)
+  const matches = ref([])
+  const loading = ref(false)
+  const error = ref(null)
+
+  /** Reactive standings computed from current round matches + teams */
+  const standings = computed(() => {
+    if (!teams.value.length) return []
+    return calculateStandings(matches.value, teams.value)
+  })
+
+  let matchSubscription = null
+
+  // ─── Teams ───────────────────────────────────────────────────────────────
+
+  async function fetchTeams(gender = null) {
+    loading.value = true
+    error.value = null
+    try {
+      let query = supabase.from('teams').select('*').order('name')
+      if (gender) query = query.eq('gender', gender)
+      const { data, error: err } = await query
+      if (err) throw err
+      teams.value = data || []
+    } catch (e) {
+      error.value = e.message
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function createTeam(payload) {
+    const { data, error: err } = await supabase.from('teams').insert(payload).select().single()
+    if (err) throw err
+    teams.value.push(data)
+    return data
+  }
+
+  async function updateTeam(id, payload) {
+    const { data, error: err } = await supabase.from('teams').update(payload).eq('id', id).select().single()
+    if (err) throw err
+    const idx = teams.value.findIndex(t => t.id === id)
+    if (idx !== -1) teams.value[idx] = data
+    return data
+  }
+
+  async function deleteTeam(id) {
+    const { error: err } = await supabase.from('teams').delete().eq('id', id)
+    if (err) throw err
+    teams.value = teams.value.filter(t => t.id !== id)
+  }
+
+  // ─── Rounds ──────────────────────────────────────────────────────────────
+
+  async function fetchRounds(seasonYear = null) {
+    loading.value = true
+    error.value = null
+    try {
+      let query = supabase.from('rounds').select('*').order('round_number')
+      if (seasonYear) query = query.eq('season_year', seasonYear)
+      const { data, error: err } = await query
+      if (err) throw err
+      rounds.value = data || []
+      activeRound.value = data?.find(r => r.status === 'Active') ?? null
+    } catch (e) {
+      error.value = e.message
+    } finally {
+      loading.value = false
+    }
+  }
+
+  // ─── Matches ─────────────────────────────────────────────────────────────
+
+  async function fetchMatches(roundId) {
+    loading.value = true
+    error.value = null
+    try {
+      const { data, error: err } = await supabase
+        .from('matches')
+        .select(`
+          *,
+          home_team:teams!home_team_id(id, name, gender, logo_url),
+          away_team:teams!away_team_id(id, name, gender, logo_url)
+        `)
+        .eq('round_id', roundId)
+        .order('match_date', { nullsFirst: true })
+      if (err) throw err
+      matches.value = data || []
+    } catch (e) {
+      error.value = e.message
+    } finally {
+      loading.value = false
+    }
+  }
+
+  /** Subscribe to real-time match updates for the active round */
+  function subscribeToMatches(roundId) {
+    if (matchSubscription) matchSubscription.unsubscribe()
+    matchSubscription = supabase
+      .channel(`matches:round:${roundId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'matches', filter: `round_id=eq.${roundId}` },
+        (payload) => {
+          const { eventType, new: newRecord, old: oldRecord } = payload
+          if (eventType === 'INSERT') {
+            matches.value.push(newRecord)
+          } else if (eventType === 'UPDATE') {
+            const idx = matches.value.findIndex(m => m.id === newRecord.id)
+            if (idx !== -1) matches.value[idx] = { ...matches.value[idx], ...newRecord }
+          } else if (eventType === 'DELETE') {
+            matches.value = matches.value.filter(m => m.id !== oldRecord.id)
+          }
+        })
+      .subscribe()
+  }
+
+  function unsubscribeFromMatches() {
+    if (matchSubscription) {
+      matchSubscription.unsubscribe()
+      matchSubscription = null
+    }
+  }
+
+  async function updateMatchScore(matchId, homeScore, awayScore) {
+    const status = (homeScore !== null && awayScore !== null) ? 'Completed' : 'Scheduled'
+    const { data, error: err } = await supabase
+      .from('matches')
+      .update({ home_score: homeScore, away_score: awayScore, status })
+      .eq('id', matchId)
+      .select(`
+        *,
+        home_team:teams!home_team_id(id, name, gender, logo_url),
+        away_team:teams!away_team_id(id, name, gender, logo_url)
+      `)
+      .single()
+    if (err) throw err
+    const idx = matches.value.findIndex(m => m.id === matchId)
+    if (idx !== -1) matches.value[idx] = data
+    return data
+  }
+
+  async function markMatchForfeit(matchId, forfeitingTeamSide) {
+    const update = forfeitingTeamSide === 'home'
+      ? { home_score: null, away_score: null, status: 'Forfeited', forfeit_side: 'home' }
+      : { home_score: null, away_score: null, status: 'Forfeited', forfeit_side: 'away' }
+    const { data, error: err } = await supabase.from('matches').update(update).eq('id', matchId).select().single()
+    if (err) throw err
+    const idx = matches.value.findIndex(m => m.id === matchId)
+    if (idx !== -1) matches.value[idx] = { ...matches.value[idx], ...data }
+    return data
+  }
+
+  // ─── Round Finalisation ──────────────────────────────────────────────────
+
+  async function finalizeRound(roundId) {
+    // 1. Compute final standings snapshot
+    const finalStandings = standings.value.map(s => ({
+      team: { id: s.team.id, name: s.team.name, gender: s.team.gender, logo_url: s.team.logo_url },
+      rank: s.rank, played: s.played, wins: s.wins, losses: s.losses,
+      ptsFor: s.ptsFor, ptsAgainst: s.ptsAgainst, ptsDiff: s.ptsDiff, leaguePts: s.leaguePts,
+    }))
+
+    // 2. Upsert snapshot
+    const { error: snapErr } = await supabase
+      .from('round_snapshots')
+      .upsert({ round_id: roundId, historical_standings_json: finalStandings })
+    if (snapErr) throw snapErr
+
+    // 3. Mark round as Completed
+    const { error: roundErr } = await supabase
+      .from('rounds')
+      .update({ status: 'Completed' })
+      .eq('id', roundId)
+    if (roundErr) throw roundErr
+
+    // 4. Activate next round (if exists)
+    const current = rounds.value.find(r => r.id === roundId)
+    if (current) {
+      const next = rounds.value.find(r => r.round_number === current.round_number + 1)
+      if (next) {
+        await supabase.from('rounds').update({ status: 'Active' }).eq('id', next.id)
+      }
+    }
+
+    // 5. Refresh rounds state
+    await fetchRounds()
+    matches.value = []
+  }
+
+  return {
+    teams, rounds, activeRound, matches, standings, loading, error,
+    fetchTeams, createTeam, updateTeam, deleteTeam,
+    fetchRounds,
+    fetchMatches, subscribeToMatches, unsubscribeFromMatches,
+    updateMatchScore, markMatchForfeit,
+    finalizeRound,
+  }
+})
