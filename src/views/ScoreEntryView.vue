@@ -30,91 +30,74 @@ async function handleSaveScore({ matchId, homeScore, awayScore }) {
   saveSuccess.value = ''
   try {
     await league.updateMatchScore(matchId, homeScore, awayScore)
-    saveSuccess.value = 'Score saved successfully.'
+    saveSuccess.value = 'Saved.'
     selectedMatch.value = null
-    setTimeout(() => { saveSuccess.value = '' }, 3000)
+    setTimeout(() => { saveSuccess.value = '' }, 2000)
   } catch (e) {
-    saveError.value = e.message || 'Failed to save score.'
+    saveError.value = e.message || 'Error.'
   }
 }
 </script>
 
 <template>
-  <div class="max-w-4xl mx-auto px-4 py-8 space-y-6 animate-fade-in pb-20">
+  <div class="max-w-3xl mx-auto px-4 py-6 space-y-4 animate-fade-in pb-20">
 
-    <!-- Standard Header -->
-    <div class="flex items-start justify-between">
+    <!-- Compact Header -->
+    <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-xl font-bold tracking-tight" style="color: var(--text-heading);">Score Management</h1>
-        <p class="text-xs mt-0.5" style="color: var(--text-muted);">
+        <h1 class="text-lg font-bold tracking-tight" style="color: var(--text-heading);">Score Entry</h1>
+        <p class="text-[10px] font-bold uppercase tracking-widest" style="color: var(--text-muted);">
           <template v-if="league.activeRound">
-            Official Scoring for Round {{ league.activeRound.round_number }} — Season {{ league.activeRound.season_year }}
+            Round {{ league.activeRound.round_number }} • {{ league.activeRound.season_year }}
           </template>
-          <template v-else>No active session</template>
         </p>
       </div>
 
-      <RouterLink to="/admin" class="btn-ghost text-xs px-4 py-2">
-        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-        </svg>
-        Dashboard
-      </RouterLink>
+      <div class="flex items-center gap-2">
+        <div v-if="league.matches.length > 0" class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg border bg-slate-500/5 transition-all" style="border-color: var(--border);">
+          <div class="w-1.5 h-1.5 rounded-full bg-blue-600"></div>
+          <span class="text-[10px] font-bold uppercase" style="color: var(--text-secondary);">{{ progressPct }}% Done</span>
+        </div>
+        <RouterLink to="/admin" class="btn-ghost flex items-center h-8 px-3 text-[10px] font-bold uppercase tracking-widest">
+          Dashboard
+        </RouterLink>
+      </div>
     </div>
 
-    <!-- Linear Progress Card (Consistent) -->
-    <div v-if="league.matches.length > 0" class="card p-5 flex flex-col gap-3">
-      <div class="flex justify-between items-center px-1">
-        <span class="text-[10px] font-bold uppercase tracking-widest" style="color: var(--text-muted);">Round Completion</span>
-        <span class="text-xs font-bold" style="color: var(--text-secondary);">{{ completedCount }} of {{ league.matches.length }} recorded</span>
-      </div>
-      <div class="flex items-center gap-4">
-        <div class="flex-1 h-2 rounded-full overflow-hidden" style="background-color: var(--bg-surface);">
-          <div
-            :style="`width: ${progressPct}%`"
-            :class="['h-full rounded-full transition-all duration-700', progressPct === 100 ? 'bg-emerald-500' : 'bg-blue-600']"
-          ></div>
-        </div>
-        <span class="text-sm font-bold w-10 text-right" style="color: var(--text-primary);">{{ progressPct }}%</span>
-      </div>
+    <!-- Progress Border Accent (Instead of a huge card) -->
+    <div v-if="league.matches.length > 0" class="h-1 rounded-full overflow-hidden" style="background-color: var(--bg-surface);">
+      <div
+        :style="`width: ${progressPct}%`"
+        :class="['h-full transition-all duration-700', progressPct === 100 ? 'bg-emerald-500' : 'bg-blue-600']"
+      ></div>
     </div>
 
     <!-- Feedback -->
     <Transition name="banner">
-      <div v-if="saveSuccess" class="flex items-center gap-2.5 px-4 py-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 text-xs font-bold">
-        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M5 13l4 4L19 7"/></svg>
+      <div v-if="saveSuccess" class="py-1.5 px-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 text-[10px] font-bold uppercase text-center">
         {{ saveSuccess }}
       </div>
     </Transition>
     <Transition name="banner">
-      <div v-if="saveError" class="px-4 py-2.5 rounded-lg bg-red-500/10 border border-red-500/30 text-red-500 text-xs font-bold">
+      <div v-if="saveError" class="py-1.5 px-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-500 text-[10px] font-bold uppercase text-center">
         {{ saveError }}
       </div>
     </Transition>
 
     <!-- Main List -->
-    <div class="space-y-4">
-      <!-- Empty State -->
-      <div v-if="!league.activeRound && !league.loading" class="card p-12 flex flex-col items-center text-center gap-4">
-        <div class="w-12 h-12 rounded-xl flex items-center justify-center bg-slate-500/5">
-          <svg class="w-6 h-6" style="color: var(--text-muted);" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-          </svg>
-        </div>
-        <div>
-          <p class="text-sm font-bold" style="color: var(--text-secondary);">No Active Round</p>
-          <p class="text-xs mt-1" style="color: var(--text-muted);">Score entry is locked until a round is activated.</p>
-        </div>
-        <RouterLink to="/admin/rounds" class="btn-primary text-xs px-6">Go to Round Manager</RouterLink>
+    <div class="space-y-2">
+      <div v-if="!league.activeRound && !league.loading" class="card p-10 flex flex-col items-center text-center gap-4">
+        <p class="text-xs font-bold" style="color: var(--text-secondary);">No Active Round Session</p>
+        <RouterLink to="/admin/rounds" class="btn-primary text-xs h-8 px-6">Activate Round</RouterLink>
       </div>
 
-      <div v-else-if="league.loading" class="space-y-3">
-        <div v-for="i in 5" :key="i" class="h-24 rounded-xl animate-pulse" style="background-color: var(--bg-surface);"/>
+      <div v-else-if="league.loading" class="space-y-2">
+        <div v-for="i in 8" :key="i" class="h-12 rounded-xl animate-pulse" style="background-color: var(--bg-surface);"/>
       </div>
 
-      <div v-else class="space-y-3">
-        <div v-if="league.matches.length === 0" class="card p-12 text-center text-xs" style="color: var(--text-muted);">
-          No matches found for this session.
+      <div v-else class="space-y-1.5">
+        <div v-if="league.matches.length === 0" class="card p-10 text-center text-[10px] font-bold uppercase" style="color: var(--text-muted);">
+          No fixtures in this round.
         </div>
 
         <MatchCard
@@ -127,7 +110,7 @@ async function handleSaveScore({ matchId, homeScore, awayScore }) {
       </div>
     </div>
 
-    <!-- Refined Modal -->
+    <!-- Compact Modal -->
     <ScoreInputModal
       :match="selectedMatch"
       @save="handleSaveScore"
