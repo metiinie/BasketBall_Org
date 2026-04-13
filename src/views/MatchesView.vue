@@ -34,8 +34,8 @@ const filteredMatches = () => {
 <template>
   <div class="max-w-3xl mx-auto px-4 py-6 space-y-6 animate-fade-in">
     <div>
-      <h1 class="text-2xl font-black text-primary">Match Schedule</h1>
-      <p class="text-muted text-sm mt-1">All fixtures and results for the current round</p>
+      <h1 class="text-xl font-bold tracking-tight" style="color: var(--text-heading);">Match Schedule</h1>
+      <p class="text-sm mt-0.5" style="color: var(--text-muted);">All fixtures and results for the current round</p>
     </div>
 
     <RoundSelector
@@ -45,31 +45,33 @@ const filteredMatches = () => {
       :show-global="false"
     />
 
-    <!-- Status Filter -->
+    <!-- Status Filters -->
     <div class="flex flex-wrap gap-2">
-      <button v-for="f in ['All', 'Today', 'Scheduled', 'Completed']" :key="f"
+      <button
+        v-for="f in ['All', 'Today', 'Scheduled', 'Completed']"
+        :key="f"
         @click="filter = f"
-        :class="[
-          'px-4 py-1.5 rounded-lg text-xs font-semibold border transition-all',
-          filter === f
-            ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
-            : 'bg-white text-slate-600 border-slate-300 hover:border-blue-400 hover:text-blue-600'
-        ]">
-        {{ f }}
-      </button>
+        :class="['px-4 py-1.5 rounded-lg text-xs font-semibold border transition-all',
+          filter === f ? 'bg-blue-600 text-white border-blue-600 shadow-sm' : '']"
+        :style="filter !== f ? 'color: var(--text-secondary); background-color: var(--bg-card); border-color: var(--border);' : ''"
+      >{{ f }}</button>
     </div>
 
-    <!-- Match List -->
+    <!-- Loading -->
     <div v-if="league.loading" class="space-y-3">
-      <div v-for="i in 4" :key="i" class="h-24 rounded-2xl bg-tertiary animate-pulse" />
+      <div v-for="i in 4" :key="i"
+        class="h-24 rounded-xl animate-pulse"
+        style="background-color: var(--bg-surface);"/>
     </div>
 
+    <!-- Matches -->
     <div v-else-if="filteredMatches().length > 0" class="space-y-3">
-      <MatchCard v-for="match in filteredMatches()" :key="match.id" :match="match" />
+      <MatchCard v-for="match in filteredMatches()" :key="match.id" :match="match"/>
     </div>
 
+    <!-- Empty -->
     <div v-else class="card p-10 text-center">
-      <p class="text-muted">No matches found for this selection.</p>
+      <p style="color: var(--text-muted);">No matches found for this selection.</p>
     </div>
   </div>
 </template>
