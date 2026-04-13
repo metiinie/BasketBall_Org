@@ -79,6 +79,25 @@ export const useLeagueStore = defineStore('league', () => {
 
   // ─── Matches ─────────────────────────────────────────────────────────────
 
+  async function createMatch(payload) {
+    const { data, error: err } = await supabase
+      .from('matches')
+      .insert(payload)
+      .select(`
+        *,
+        home_team:teams!home_team_id(id, name, gender, logo_url),
+        away_team:teams!away_team_id(id, name, gender, logo_url)
+      `)
+      .single()
+    if (err) throw err
+    // Only add to local state if the scheduled match is in the currently viewed round.
+    // If we're displaying this round, push it to our array instantly.
+    if (matches.value.length > 0 && matches.value[0].round_id === data.round_id) {
+       matches.value.push(data)
+    }
+    return data
+  }
+
   async function fetchMatches(roundId) {
     loading.value = true
     error.value = null
@@ -198,7 +217,7 @@ export const useLeagueStore = defineStore('league', () => {
     teams, rounds, activeRound, matches, standings, loading, error,
     fetchTeams, createTeam, updateTeam, deleteTeam,
     fetchRounds,
-    fetchMatches, subscribeToMatches, unsubscribeFromMatches,
+    fetchMatches, createMatch, subscribeToMatches, unsubscribeFromMatches,
     updateMatchScore, markMatchForfeit,
     finalizeRound,
   }

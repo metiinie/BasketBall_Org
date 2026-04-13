@@ -25,10 +25,10 @@ const standingsWithTie = computed(() => {
 })
 
 function rowClass(rank) {
-  if (rank === 1) return 'bg-ebf-gold/8 border-l-2 border-ebf-gold'
-  if (rank === 2) return 'bg-gray-400/5 border-l-2 border-gray-400'
-  if (rank === 3) return 'bg-ebf-orange/5 border-l-2 border-ebf-orange/40'
-  return 'border-l-2 border-transparent'
+  if (rank === 1) return 'bg-ebf-gold/10 border-l-[3px] border-ebf-gold shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]'
+  if (rank === 2) return 'bg-gray-400/5 border-l-[3px] border-gray-400'
+  if (rank === 3) return 'bg-ebf-orange/5 border-l-[3px] border-ebf-orange/40'
+  return 'border-l-[3px] border-transparent'
 }
 
 function rankBadgeClass(rank) {
@@ -92,13 +92,13 @@ async function handleExportImage() {
 
     <!-- Standings Table -->
     <div v-else-if="standings.length > 0" id="standings-social-card"
-      class="rounded-2xl overflow-hidden border border-navy-700/60 bg-navy-800/40">
+      class="rounded-3xl overflow-hidden glass-panel">
 
       <!-- Social Card Header (visible in PNG export) -->
-      <div class="px-4 py-3 bg-gradient-to-r from-navy-900 to-navy-800 border-b border-navy-700/60 flex items-center justify-between">
-        <div class="flex items-center gap-2.5">
-          <div class="w-8 h-8 rounded-lg bg-gradient-ebf flex items-center justify-center">
-            <svg viewBox="0 0 32 32" class="w-4 h-4 fill-none stroke-white" stroke-width="2">
+      <div class="px-5 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+            <svg viewBox="0 0 32 32" class="w-5 h-5 fill-none stroke-blue-600" stroke-width="2">
               <circle cx="16" cy="16" r="10" />
               <path d="M16 6 Q20 11 20 16 Q20 21 16 26" />
               <path d="M16 6 Q12 11 12 16 Q12 21 16 26" />
@@ -106,80 +106,94 @@ async function handleExportImage() {
             </svg>
           </div>
           <div>
-            <div class="text-xs font-bold text-white leading-none">EBF League</div>
-            <div class="text-[10px] text-gray-500 leading-none mt-0.5">{{ gender }} Division</div>
+            <div class="text-sm font-bold text-slate-900 leading-none">EBF League</div>
+            <div class="text-xs text-slate-500 leading-none mt-1">{{ gender }} Division</div>
           </div>
         </div>
         <div class="text-right">
-          <div class="text-xs font-bold text-ebf-orange">{{ roundLabel }}</div>
-          <div class="text-[10px] text-gray-500">Season {{ seasonYear }}</div>
+          <div class="text-sm font-bold text-blue-600">{{ roundLabel }}</div>
+          <div class="text-xs text-slate-500 mt-1">Season {{ seasonYear }}</div>
         </div>
       </div>
 
       <!-- Table -->
-      <div class="overflow-x-auto">
-        <table class="w-full text-sm">
+      <div class="overflow-x-auto pb-2">
+        <table class="w-full text-left border-collapse">
           <thead>
-            <tr class="bg-navy-900/80 border-b border-navy-700/60">
-              <th class="py-3 px-3 text-left text-[11px] font-bold text-gray-500 uppercase tracking-wider w-10">#</th>
-              <th class="py-3 px-2 text-left text-[11px] font-bold text-gray-500 uppercase tracking-wider">Team</th>
-              <th class="py-3 px-2 text-center text-[11px] font-bold text-gray-500 uppercase tracking-wider w-9">P</th>
-              <th class="py-3 px-2 text-center text-[11px] font-bold text-gray-500 uppercase tracking-wider w-9">W</th>
-              <th class="py-3 px-2 text-center text-[11px] font-bold text-gray-500 uppercase tracking-wider w-9">L</th>
-              <th class="py-3 px-2 text-center text-[11px] font-bold text-gray-500 uppercase tracking-wider w-14 hidden sm:table-cell">PD</th>
-              <th class="py-3 px-3 text-center text-[11px] font-bold text-ebf-orange uppercase tracking-wider w-12">Pts</th>
+            <tr class="border-b border-slate-200">
+              <th class="py-4 px-4 text-xs font-bold text-slate-500 uppercase tracking-wider w-12 text-center">Rank</th>
+              <th class="py-4 px-2 text-xs font-bold text-slate-500 uppercase tracking-wider text-left">Team</th>
+              <th class="py-4 px-2 text-xs font-bold text-slate-500 uppercase tracking-wider text-right w-12">GP</th>
+              <th class="py-4 px-2 text-xs font-bold text-slate-500 uppercase tracking-wider text-right w-12">W</th>
+              <th class="py-4 px-2 text-xs font-bold text-slate-500 uppercase tracking-wider text-right w-12">L</th>
+              <th class="py-4 px-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-right w-14">PD</th>
+              <th class="py-4 px-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right w-16">Pts</th>
+              <th class="py-4 px-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center w-24">Form</th>
             </tr>
           </thead>
 
           <TransitionGroup name="standing-row" tag="tbody">
             <tr
-              v-for="entry in standingsWithTie"
+              v-for="(entry, index) in standingsWithTie"
               :key="entry.team.id"
-              :class="['border-b border-navy-700/40 last:border-0 transition-all duration-300 hover:bg-navy-700/30', rowClass(entry.rank)]"
+              class="border-b border-slate-100 hover:bg-slate-50 transition-colors group"
             >
               <!-- Rank -->
-              <td class="py-3 px-3">
-                <span :class="['inline-flex items-center justify-center w-6 h-6 rounded-lg text-xs', rankBadgeClass(entry.rank)]">
-                  {{ entry.rank <= 3 ? entry.rank : entry.rank }}
+              <td class="py-4 px-4 text-center">
+                <span class="text-sm font-bold text-slate-600">
+                  {{ index < 9 ? '0' + (index + 1) : (index + 1) }}
                 </span>
               </td>
 
               <!-- Team -->
-              <td class="py-3 px-2">
-                <div class="flex items-center gap-2.5">
-                  <div class="w-8 h-8 rounded-full flex-shrink-0 bg-navy-700 flex items-center justify-center text-xs font-black text-ebf-orange overflow-hidden">
+              <td class="py-4 px-2">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-xs font-bold text-slate-500 overflow-hidden shrink-0">
                     <img v-if="entry.team.logo_url" :src="entry.team.logo_url" class="w-full h-full object-cover" />
                     <span v-else>{{ teamInitial(entry.team) }}</span>
                   </div>
-                  <div class="min-w-0">
-                    <div class="font-semibold text-white text-sm truncate leading-tight">
+                  <div class="flex flex-col text-left">
+                    <span class="font-bold text-slate-900 text-sm truncate leading-tight group-hover:text-blue-600 transition-colors">
                       {{ entry.team.name }}
-                      <span v-if="isGlobal" class="ml-1 text-[10px] text-ebf-gold font-bold">
-                        ×{{ entry.roundsPlayed ?? 0 }}
-                      </span>
-                    </div>
-                    <div v-if="entry.isTied" class="text-[10px] text-yellow-500 font-semibold">TIE</div>
+                    </span>
+                    <span class="text-xs text-slate-500 mt-0.5" v-if="entry.isTied">Tied</span>
                   </div>
                 </div>
               </td>
 
-              <!-- Played -->
-              <td class="py-3 px-2 text-center text-gray-400 tabular-nums">{{ entry.played }}</td>
+              <!-- GP -->
+              <td class="py-4 px-2 text-right text-slate-600 tabular-nums">{{ entry.played }}</td>
 
-              <!-- Wins -->
-              <td class="py-3 px-2 text-center text-green-400 font-semibold tabular-nums">{{ entry.wins }}</td>
+              <!-- W -->
+              <td class="py-4 px-2 text-right text-slate-900 font-semibold tabular-nums">{{ entry.wins }}</td>
 
-              <!-- Losses -->
-              <td class="py-3 px-2 text-center text-red-400 font-semibold tabular-nums">{{ entry.losses }}</td>
+              <!-- L -->
+              <td class="py-4 px-2 text-right text-slate-600 font-medium tabular-nums">{{ entry.losses }}</td>
 
-              <!-- Point Diff -->
-              <td :class="['py-3 px-2 text-center font-semibold tabular-nums hidden sm:table-cell', pdClass(entry.ptsDiff)]">
+              <!-- PD -->
+              <td class="py-4 px-3 text-right font-semibold tabular-nums text-slate-900">
                 {{ entry.ptsDiff > 0 ? '+' : '' }}{{ entry.ptsDiff }}
               </td>
 
-              <!-- League Pts -->
-              <td class="py-3 px-3 text-center">
-                <span class="text-base font-black text-ebf-orange tabular-nums">{{ entry.leaguePts }}</span>
+              <!-- PTS -->
+              <td class="py-4 px-4 text-right">
+                <span class="text-base font-bold text-blue-600 tabular-nums">{{ entry.leaguePts }}</span>
+              </td>
+              
+              <!-- FORM Record -->
+              <td class="py-4 px-4">
+                <div class="flex justify-center gap-1.5 w-full">
+                  <template v-for="(result, fIndex) in entry.form" :key="'f-'+fIndex">
+                    <div class="w-2.5 h-6 rounded-sm transition-all"
+                         :class="result === 'W' ? 'bg-emerald-500' : 'bg-rose-500'"
+                         :title="result">
+                    </div>
+                  </template>
+                  <!-- Pad empty blocks if played less than 5 -->
+                  <template v-for="empty in Math.max(0, 5 - entry.form.length)" :key="'e-'+empty">
+                    <div class="w-2.5 h-6 rounded-sm bg-slate-200"></div>
+                  </template>
+                </div>
               </td>
             </tr>
           </TransitionGroup>
@@ -200,7 +214,7 @@ async function handleExportImage() {
     </div>
 
     <!-- Empty State -->
-    <div v-else class="card p-12 flex flex-col items-center text-center gap-4">
+    <div v-else class="glass-panel p-16 flex flex-col items-center text-center gap-5 rounded-3xl">
       <div class="w-16 h-16 rounded-2xl bg-navy-700/60 flex items-center justify-center">
         <svg class="w-8 h-8 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"

@@ -3,7 +3,7 @@ import { calculateStandings } from './standings.js'
 
 // ─── Test Fixture Helpers ─────────────────────────────────────────────────
 
-const mkTeam = (id, name) => ({ id, name, gender: 'Male', logo_url: null })
+const mkTeam = (id, name) => ({ id, name, gender: 'ወንድ', logo_url: null })
 const mkMatch = (id, homeId, awayId, homeScore, awayScore, status = 'Completed') => ({
   id, home_team_id: homeId, away_team_id: awayId,
   home_score: homeScore, away_score: awayScore, status,

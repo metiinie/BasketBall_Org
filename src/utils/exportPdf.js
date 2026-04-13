@@ -36,13 +36,15 @@ export async function exportStandingsPdf(standings, options = {}) {
     s.played,
     s.wins,
     s.losses,
+    s.ptsFor,
+    s.ptsAgainst,
     s.ptsDiff > 0 ? `+${s.ptsDiff}` : s.ptsDiff,
     s.leaguePts,
   ])
 
   autoTable(doc, {
     startY: 46,
-    head: [['#', 'Team', 'P', 'W', 'L', 'PD', 'Pts']],
+    head: [['#', 'Team', 'P', 'W', 'L', 'PF', 'PA', 'PD', 'Pts']],
     body: rows,
     headStyles: {
       fillColor: [232, 87, 26],
@@ -59,13 +61,15 @@ export async function exportStandingsPdf(standings, options = {}) {
       fillColor: [13, 27, 42],
     },
     columnStyles: {
-      0: { halign: 'center', cellWidth: 12 },
-      1: { halign: 'left', cellWidth: 80 },
-      2: { cellWidth: 15 },
-      3: { cellWidth: 15 },
-      4: { cellWidth: 15 },
-      5: { cellWidth: 20 },
-      6: { cellWidth: 20, fontStyle: 'bold', textColor: [232, 87, 26] },
+      0: { halign: 'center', cellWidth: 10 },
+      1: { halign: 'left', cellWidth: 60 },
+      2: { cellWidth: 12 },
+      3: { cellWidth: 12 },
+      4: { cellWidth: 12 },
+      5: { cellWidth: 14 },
+      6: { cellWidth: 14 },
+      7: { cellWidth: 15 },
+      8: { cellWidth: 15, fontStyle: 'bold', textColor: [232, 87, 26] },
     },
     didDrawRow: (data) => {
       // Highlight top 2 rows with gold accent

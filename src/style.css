@@ -1,27 +1,22 @@
 /* ─────────────────────────────────────────────────────────────────────────
    EBF League Management System — Global Styles
-   Tailwind CSS v4  |  @tailwindcss/vite (no tailwind.config.js needed)
+   Tailwind CSS v4  |  @tailwindcss/vite
 ───────────────────────────────────────────────────────────────────────── */
 
 @import "tailwindcss";
 
-/* ── Custom Design Tokens (@theme replaces tailwind.config.js) ─────────── */
+/* ── Custom Design Tokens ─────────── */
 
 @theme {
-  /* Navy colour palette */
-  --color-navy-950: #060d17;
-  --color-navy-900: #0d1b2a;
-  --color-navy-800: #112236;
-  --color-navy-700: #172d47;
-  --color-navy-600: #1e3a5f;
-  --color-navy-500: #2a5298;
-
-  /* EBF brand colours */
+  /* EBF brand colours kept from original */
   --color-ebf-orange:       #E8571A;
   --color-ebf-orange-light: #f0784a;
   --color-ebf-orange-dark:  #c44810;
   --color-ebf-gold:         #f5a623;
   --color-ebf-gold-light:   #fbbf3a;
+  
+  --color-neon-green:       #10B981;
+  --color-neon-green-dim:   rgba(16, 185, 129, 0.2);
 
   /* Typography */
   --font-sans: Inter, system-ui, sans-serif;
@@ -31,6 +26,52 @@
   --animate-slide-up:   slideUp   0.4s ease-out;
   --animate-pulse-glow: pulseGlow 2s   infinite;
   --animate-rank-change: rankChange 0.5s ease-out;
+}
+
+@layer base {
+  :root {
+    --bg-primary: #f8fafc; /* Slate-50 */
+    --bg-secondary: #f1f5f9; /* Slate-100 */
+    --bg-tertiary: #e2e8f0; /* Slate-200 */
+    --bg-card: #ffffff; /* White */
+    
+    --text-primary: #0f172a; /* Slate-900 */
+    --text-secondary: #475569; /* Slate-600 */
+    --text-muted: #64748b; /* Slate-500 */
+    
+    --border-color: #e2e8f0; /* Slate-200 */
+  }
+
+  /* Optional clean Dark mode (fallback) */
+  .dark {
+    --bg-primary: #0f172a;
+    --bg-secondary: #1e293b;
+    --bg-tertiary: #334155;
+    --bg-card: #1e293b;
+    
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    
+    --border-color: #334155;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+
+  ::-webkit-scrollbar              { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track        { background: transparent; }
+  ::-webkit-scrollbar-thumb        { background: #cbd5e1; border-radius: 9999px; }
+  ::-webkit-scrollbar-thumb:hover  { background: #94a3b8; }
 }
 
 /* ── Keyframes ─────────────────────────────────────────────────────────── */
@@ -46,8 +87,8 @@
 }
 
 @keyframes pulseGlow {
-  0%, 100% { box-shadow: 0 0 0 0   rgb(232 87 26 / 0.4); }
-  70%       { box-shadow: 0 0 0 8px rgb(232 87 26 / 0);   }
+  0%, 100% { box-shadow: 0 0 0 0   rgba(16, 185, 129, 0.4); }
+  70%      { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);   }
 }
 
 @keyframes rankChange {
@@ -55,18 +96,20 @@
   to   { background-color: transparent;            }
 }
 
-/* ── Custom gradient utilities (@utility replaces backgroundImage config) ── */
+/* ── Custom Utilities ── */
 
 @utility bg-gradient-ebf {
   background-image: linear-gradient(135deg, #E8571A 0%, #c44810 100%);
 }
 
-@utility bg-gradient-navy {
-  background-image: linear-gradient(180deg, #0d1b2a 0%, #060d17 100%);
+@utility bg-gradient-neon {
+  background-image: linear-gradient(135deg, #10B981 0%, #059669 100%);
 }
 
-@utility bg-gradient-card {
-  background-image: linear-gradient(145deg, #112236 0%, #0d1b2a 100%);
+@utility glass-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05); /* soft shadow */
 }
 
 @utility scrollbar-hide {
@@ -75,95 +118,78 @@
   &::-webkit-scrollbar { display: none; }
 }
 
-/* ── Base layer ────────────────────────────────────────────────────────── */
-
-@layer base {
-  *, *::before, *::after { box-sizing: border-box; }
-
-  html { scroll-behavior: smooth; }
-
-  body {
-    background-color: var(--color-navy-900);
-    color: #fff;
-    font-family: var(--font-sans);
-    -webkit-font-smoothing: antialiased;
-    min-height: 100vh;
-  }
-
-  ::-webkit-scrollbar              { width: 6px; height: 6px; }
-  ::-webkit-scrollbar-track        { background: var(--color-navy-800); }
-  ::-webkit-scrollbar-thumb        { background: var(--color-navy-600); border-radius: 9999px; }
-  ::-webkit-scrollbar-thumb:hover  { background: var(--color-ebf-orange); }
-}
-
 /* ── Component layer ───────────────────────────────────────────────────── */
 
 @layer components {
 
-  /* Buttons */
+  /* ── Buttons ── Professional sizing: sm=32px, default=36px */
   .btn-primary {
-    @apply bg-ebf-orange hover:bg-ebf-orange-light active:bg-ebf-orange-dark
-           text-white font-semibold px-5 py-2.5 rounded-xl
-           transition-all duration-200
-           shadow-lg
+    @apply bg-blue-600 hover:bg-blue-700 active:bg-blue-800
+           text-white text-sm font-semibold px-3.5 py-2 rounded-lg
+           transition-all duration-150
+           shadow-sm
            disabled:opacity-50 disabled:cursor-not-allowed
-           inline-flex items-center justify-center;
+           inline-flex items-center justify-center gap-1.5 leading-none;
   }
 
   .btn-ghost {
-    @apply border border-navy-600 hover:border-ebf-orange
-           text-gray-300 hover:text-white font-medium
-           px-5 py-2.5 rounded-xl
-           transition-all duration-200
+    @apply border border-slate-200 hover:bg-slate-50 hover:border-slate-300
+           text-slate-600 hover:text-slate-900 text-sm font-medium
+           px-3.5 py-2 rounded-lg
+           transition-all duration-150
            disabled:opacity-50
-           inline-flex items-center justify-center;
+           inline-flex items-center justify-center gap-1.5 leading-none;
   }
 
   .btn-danger {
     @apply bg-red-600 hover:bg-red-500
-           text-white font-semibold px-5 py-2.5 rounded-xl
-           transition-all duration-200
-           inline-flex items-center justify-center;
+           text-white text-sm font-semibold px-3.5 py-2 rounded-lg
+           transition-all duration-150
+           inline-flex items-center justify-center gap-1.5 leading-none;
+  }
+
+  /* Small variant for inline/table actions */
+  .btn-sm {
+    @apply text-xs font-medium px-2.5 py-1.5 rounded-md
+           transition-all duration-150
+           inline-flex items-center justify-center gap-1 leading-none;
+  }
+
+  /* Icon-only button */
+  .btn-icon {
+    @apply w-8 h-8 rounded-lg border border-slate-200
+           flex items-center justify-center
+           text-slate-400 hover:text-slate-700 hover:bg-slate-50
+           transition-all duration-150;
   }
 
   /* Card surface */
   .card {
-    background-image: linear-gradient(145deg, var(--color-navy-800) 0%, var(--color-navy-900) 100%);
-    @apply rounded-2xl border border-navy-700/60 shadow-xl;
+    background-color: var(--bg-card);
+    @apply rounded-xl border border-slate-200 shadow-sm;
   }
 
   /* Form input */
   .input-field {
-    @apply w-full bg-navy-900 border border-navy-600
-           rounded-xl px-4 py-3
-           text-white outline-none
-           transition-all duration-200;
-
-    &::placeholder { color: rgb(107 114 128); }
+    @apply w-full bg-white border border-slate-200
+           rounded-lg px-3 py-2
+           text-sm text-slate-900 outline-none
+           placeholder:text-slate-400
+           transition-all duration-150;
 
     &:focus {
-      border-color: var(--color-ebf-orange);
-      box-shadow: 0 0 0 2px rgb(232 87 26 / 0.2);
+      @apply border-blue-500 ring-2 ring-blue-500/20;
     }
   }
 
   /* Status badges */
-  .badge-win {
-    @apply inline-flex items-center px-2 py-0.5 rounded-full
-           text-xs font-bold bg-green-500/20 text-green-400;
+  .badge {
+    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium;
   }
-  .badge-loss {
-    @apply inline-flex items-center px-2 py-0.5 rounded-full
-           text-xs font-bold bg-red-500/20 text-red-400;
-  }
-  .badge-pending {
-    @apply inline-flex items-center px-2 py-0.5 rounded-full
-           text-xs font-bold bg-yellow-500/20 text-yellow-400;
-  }
-  .badge-completed {
-    @apply inline-flex items-center px-2 py-0.5 rounded-full
-           text-xs font-bold bg-blue-500/20 text-blue-400;
-  }
+  .badge-win      { @apply badge bg-emerald-50 text-emerald-700 border border-emerald-200; }
+  .badge-loss     { @apply badge bg-red-50 text-red-600 border border-red-200; }
+  .badge-pending  { @apply badge bg-amber-50 text-amber-700 border border-amber-200; }
+  .badge-completed { @apply badge bg-blue-50 text-blue-700 border border-blue-200; }
 }
 
 /* ── Standings TransitionGroup animations ──────────────────────────────── */

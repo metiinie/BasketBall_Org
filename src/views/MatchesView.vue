@@ -23,6 +23,10 @@ async function onRoundChange(id) {
 
 const filteredMatches = () => {
   if (filter.value === 'All') return league.matches
+  if (filter.value === 'Today') {
+    const today = new Date().toLocaleDateString()
+    return league.matches.filter(m => m.match_date && new Date(m.match_date).toLocaleDateString() === today)
+  }
   return league.matches.filter(m => m.status === filter.value)
 }
 </script>
@@ -30,8 +34,8 @@ const filteredMatches = () => {
 <template>
   <div class="max-w-3xl mx-auto px-4 py-6 space-y-6 animate-fade-in">
     <div>
-      <h1 class="text-2xl font-black text-white">Match Schedule</h1>
-      <p class="text-gray-500 text-sm mt-1">All fixtures and results for the current round</p>
+      <h1 class="text-2xl font-black text-primary">Match Schedule</h1>
+      <p class="text-muted text-sm mt-1">All fixtures and results for the current round</p>
     </div>
 
     <RoundSelector
@@ -42,14 +46,14 @@ const filteredMatches = () => {
     />
 
     <!-- Status Filter -->
-    <div class="flex gap-2">
-      <button v-for="f in ['All', 'Scheduled', 'Completed']" :key="f"
+    <div class="flex flex-wrap gap-2">
+      <button v-for="f in ['All', 'Today', 'Scheduled', 'Completed']" :key="f"
         @click="filter = f"
         :class="[
-          'px-4 py-1.5 rounded-xl text-xs font-semibold border transition-all',
+          'px-4 py-1.5 rounded-lg text-xs font-semibold border transition-all',
           filter === f
-            ? 'bg-ebf-orange/20 text-ebf-orange border-ebf-orange/50'
-            : 'bg-navy-800/60 text-gray-500 border-navy-600 hover:text-white'
+            ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+            : 'bg-white text-slate-600 border-slate-300 hover:border-blue-400 hover:text-blue-600'
         ]">
         {{ f }}
       </button>
@@ -57,7 +61,7 @@ const filteredMatches = () => {
 
     <!-- Match List -->
     <div v-if="league.loading" class="space-y-3">
-      <div v-for="i in 4" :key="i" class="h-24 rounded-2xl bg-navy-800/60 animate-pulse" />
+      <div v-for="i in 4" :key="i" class="h-24 rounded-2xl bg-tertiary animate-pulse" />
     </div>
 
     <div v-else-if="filteredMatches().length > 0" class="space-y-3">
@@ -65,7 +69,7 @@ const filteredMatches = () => {
     </div>
 
     <div v-else class="card p-10 text-center">
-      <p class="text-gray-500">No matches found for this selection.</p>
+      <p class="text-muted">No matches found for this selection.</p>
     </div>
   </div>
 </template>

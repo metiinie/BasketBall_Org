@@ -45,6 +45,12 @@ const routes = [
     meta: { title: 'Team Manager – EBF', requiresAuth: true },
   },
   {
+    path: '/admin/scheduler',
+    name: 'match-scheduler',
+    component: () => import('@/views/MatchSchedulerView.vue'),
+    meta: { title: 'Match Scheduler – EBF', requiresAuth: true },
+  },
+  {
     path: '/:pathMatch(.*)*',
     redirect: '/',
   },

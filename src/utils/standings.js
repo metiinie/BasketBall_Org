@@ -20,7 +20,7 @@ export function calculateStandings(matches, teams) {
   if (!teams || teams.length === 0) return []
 
   const completedMatches = matches.filter(
-    m => m.status === 'Completed' || m.status === 'Forfeited'
+    m => m.status === 'Completed'
   )
 
   // ─── 1. Build base stats for each team ─────────────────────────────────
@@ -36,6 +36,7 @@ export function calculateStandings(matches, teams) {
       ptsAgainst: 0,
       ptsDiff:   0,
       leaguePts: 0,
+      form:      [],
     }
   })
 
@@ -63,19 +64,20 @@ export function calculateStandings(matches, teams) {
     away.ptsAgainst += match.home_score
 
     if (match.home_score > match.away_score) {
-      home.wins++;  home.leaguePts += 2
-      away.losses++; away.leaguePts += 1
+      home.wins++;  home.leaguePts += 2; home.form.push('W')
+      away.losses++; away.leaguePts += 1; away.form.push('L')
     } else if (match.away_score > match.home_score) {
-      away.wins++;  away.leaguePts += 2
-      home.losses++; home.leaguePts += 1
+      away.wins++;  away.leaguePts += 2; away.form.push('W')
+      home.losses++; home.leaguePts += 1; home.form.push('L')
     }
     // Basketball has no draws (overtime resolves ties), but guard against
     // bad data: if equal scores, neither team gets extra points.
   })
 
-  // ─── 3. Compute overall point difference ───────────────────────────────
+  // ─── 3. Compute overall point difference and limit form width ────────
   Object.values(statsMap).forEach(s => {
     s.ptsDiff = s.ptsFor - s.ptsAgainst
+    s.form = s.form.slice(-5) // keep only last 5
   })
 
   const standings = Object.values(statsMap)
@@ -104,16 +106,16 @@ function _processForfeit(match, home, away) {
       : 'both')
 
   if (side === 'both') {
-    home.forfeits++
-    away.forfeits++
+    home.forfeits++; home.form.push('L')
+    away.forfeits++; away.form.push('L')
   } else if (side === 'home') {
-    home.forfeits++
-    away.wins++
-    away.leaguePts += 2
+    home.forfeits++; home.form.push('L')
+    away.wins++;
+    away.leaguePts += 2; away.form.push('W')
   } else {
-    away.forfeits++
-    home.wins++
-    home.leaguePts += 2
+    away.forfeits++; away.form.push('L')
+    home.wins++;
+    home.leaguePts += 2; home.form.push('W')
   }
 }
 
@@ -121,7 +123,7 @@ function _processForfeit(match, home, away) {
  * Sort standings array applying FIBA tie-breaking cascade.
  * Groups teams by equal league points and resolves each group independently.
  */
-function _sortStandings(standings, allMatches) {
+export function _sortStandings(standings, allMatches) {
   // Primary sort: league points descending
   standings.sort((a, b) => b.leaguePts - a.leaguePts)
 

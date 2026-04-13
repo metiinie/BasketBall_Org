@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { supabase } from '@/lib/supabase.js'
+import { _sortStandings } from '@/utils/standings.js'
 
 export const useGlobalStore = defineStore('global', () => {
   const snapshots = ref([])
@@ -15,10 +16,9 @@ export const useGlobalStore = defineStore('global', () => {
     try {
       let query = supabase
         .from('round_snapshots')
-        .select(`*, rounds(id, round_number, season_year, status)`)
+        .select(`*, rounds!inner(id, round_number, season_year, status)`)
 
       if (seasonYear) {
-        // Filter via rounds join
         query = query.eq('rounds.season_year', seasonYear)
       }
 
@@ -28,11 +28,22 @@ export const useGlobalStore = defineStore('global', () => {
       const validSnapshots = (data || []).filter(s => s.rounds?.status === 'Completed')
       snapshots.value = validSnapshots
 
-      // Collect unique season years
       const years = [...new Set(validSnapshots.map(s => s.rounds?.season_year).filter(Boolean))]
       seasonYears.value = years.sort((a, b) => b - a)
 
-      globalStandings.value = aggregateStandings(validSnapshots)
+      // Fetch all matches across these completed rounds to perform proper FIBA H2H tiebreakers
+      const roundIds = validSnapshots.map(s => s.round_id)
+      let allMatches = []
+      if (roundIds.length > 0) {
+        const { data: matchesData } = await supabase
+          .from('matches')
+          .select('*')
+          .in('round_id', roundIds)
+          .eq('status', 'Completed')
+        allMatches = matchesData || []
+      }
+
+      globalStandings.value = aggregateStandings(validSnapshots, allMatches)
     } catch (e) {
       error.value = e.message
     } finally {
@@ -40,7 +51,7 @@ export const useGlobalStore = defineStore('global', () => {
     }
   }
 
-  function aggregateStandings(snapshotsData) {
+  function aggregateStandings(snapshotsData, allMatches) {
     const aggregate = {}
 
     snapshotsData.forEach(snapshot => {
@@ -66,12 +77,9 @@ export const useGlobalStore = defineStore('global', () => {
       })
     })
 
-    return Object.values(aggregate)
-      .sort((a, b) => {
-        if (b.leaguePts !== a.leaguePts) return b.leaguePts - a.leaguePts
-        return b.ptsDiff - a.ptsDiff
-      })
-      .map((s, i) => ({ ...s, rank: i + 1 }))
+    const rawStandings = Object.values(aggregate)
+    const sorted = _sortStandings(rawStandings, allMatches)
+    return sorted.map((s, i) => ({ ...s, rank: i + 1 }))
   }
 
   return { snapshots, globalStandings, seasonYears, loading, error, fetchGlobalStandings }

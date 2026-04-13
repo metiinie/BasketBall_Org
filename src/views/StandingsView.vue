@@ -9,7 +9,7 @@ const league = useLeagueStore()
 const global = useGlobalStore()
 
 const selectedRound = ref(null)
-const selectedGender = ref('Male')
+const selectedGender = ref('ወንድ')
 
 onMounted(async () => {
   await league.fetchRounds()
@@ -52,13 +52,11 @@ const seasonYear = () => currentRound()?.season_year ?? ''
 <template>
   <div class="max-w-3xl mx-auto px-4 py-6 space-y-6 animate-fade-in">
     <!-- Hero Banner -->
-    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-navy-800 to-navy-950 border border-navy-700/60 p-6">
-      <div class="absolute inset-0 bg-gradient-to-r from-ebf-orange/10 to-transparent pointer-events-none" />
-      <div class="absolute -right-8 -top-8 w-40 h-40 bg-ebf-orange/5 rounded-full blur-2xl" />
-      <div class="relative">
-        <div class="flex items-center gap-3 mb-2">
-          <div class="w-10 h-10 rounded-xl bg-gradient-ebf flex items-center justify-center shadow-lg shadow-ebf-orange/30">
-            <svg viewBox="0 0 32 32" class="w-5 h-5" fill="none" stroke="white" stroke-width="2">
+    <div class="card p-8">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div class="flex items-center gap-4">
+          <div class="w-14 h-14 rounded-2xl bg-blue-600 flex-shrink-0 flex items-center justify-center shadow-md shadow-blue-600/30">
+            <svg viewBox="0 0 32 32" class="w-6 h-6" fill="none" stroke="white" stroke-width="2">
               <circle cx="16" cy="16" r="10"/>
               <path d="M16 6 Q20 11 20 16 Q20 21 16 26"/>
               <path d="M16 6 Q12 11 12 16 Q12 21 16 26"/>
@@ -66,29 +64,29 @@ const seasonYear = () => currentRound()?.season_year ?? ''
             </svg>
           </div>
           <div>
-            <h1 class="text-xl font-black text-white leading-none">EBF League Standings</h1>
-            <p class="text-xs text-gray-500 leading-none mt-0.5">Ethiopian Basketball Federation</p>
+            <h1 class="text-2xl font-black text-slate-900 tracking-tight leading-none mb-1">EBF League Standings</h1>
+            <p class="text-sm font-medium text-slate-500 capitalize tracking-wide">Ethiopian Basketball Federation</p>
           </div>
         </div>
         <!-- Live indicator -->
-        <div v-if="league.activeRound" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-500/15 border border-green-500/30">
-          <span class="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span>
-          <span class="text-[11px] font-semibold text-green-400">Live — Round {{ league.activeRound.round_number }}</span>
+        <div v-if="league.activeRound" class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-50 border border-emerald-200">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span class="text-xs font-bold tracking-wide text-emerald-600 uppercase">Live · Round {{ league.activeRound.round_number }}</span>
         </div>
       </div>
     </div>
 
     <!-- Gender Filter -->
     <div class="flex gap-2">
-      <button v-for="g in ['Male', 'Female']" :key="g"
+      <button v-for="g in ['ወንድ', 'ሴት']" :key="g"
         @click="selectedGender = g"
         :class="[
-          'flex-1 py-2.5 rounded-xl text-sm font-semibold border transition-all duration-200',
+          'flex-1 py-2.5 rounded-lg text-sm font-semibold border transition-all duration-200',
           selectedGender === g
-            ? 'bg-ebf-orange text-white border-ebf-orange shadow-lg shadow-ebf-orange/25'
-            : 'bg-navy-800/60 text-gray-400 border-navy-600 hover:border-ebf-orange/40 hover:text-white'
+            ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+            : 'bg-white text-slate-600 border-slate-300 hover:border-blue-400 hover:text-blue-600'
         ]">
-        <span>{{ g === 'Male' ? '♂' : '♀' }}</span> {{ g }}
+        <span>{{ g === 'ወንድ' ? '♂' : '♀' }}</span> {{ g }}
       </button>
     </div>
 
@@ -116,10 +114,17 @@ const seasonYear = () => currentRound()?.season_year ?? ''
     </div>
 
     <!-- FIBA Rules Note -->
-    <div class="card p-4 text-xs text-gray-600 space-y-1">
-      <p class="font-semibold text-gray-500">FIBA Tiebreaker Rules:</p>
-      <p>1. Head-to-Head result → 2. H2H Point Difference → 3. Overall Point Difference</p>
-      <p>Win = 2pts · Loss = 1pt · Forfeit = 0pts</p>
+    <div class="card p-5 text-xs text-slate-500 space-y-1.5 flex items-start gap-4">
+      <div class="p-2 rounded-lg bg-slate-100 shrink-0">
+        <svg class="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+      <div>
+        <p class="font-bold text-slate-700 tracking-wide uppercase text-[10px] mb-1">FIBA Tiebreaker Rules Applied</p>
+        <p>1. Head-to-Head Result &nbsp;→&nbsp; 2. H2H Point Difference &nbsp;→&nbsp; 3. Overall Point Difference.</p>
+        <p class="mt-1">Win = <span class="text-blue-600 font-bold">2 pts</span> &nbsp;|&nbsp; Loss = <span class="text-slate-600 font-bold">1 pt</span> &nbsp;|&nbsp; Forfeit = <span class="text-red-500 font-bold">0 pts</span></p>
+      </div>
     </div>
   </div>
 </template>

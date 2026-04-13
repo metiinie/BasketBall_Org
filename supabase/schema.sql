@@ -8,7 +8,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- ─── Enums ──────────────────────────────────────────────────────────────────
 
-CREATE TYPE team_gender   AS ENUM ('Male', 'Female');
+CREATE TYPE team_gender   AS ENUM ('ወንድ', 'ሴት');
 CREATE TYPE round_status  AS ENUM ('Pending', 'Active', 'Completed');
 CREATE TYPE match_status  AS ENUM ('Scheduled', 'Completed', 'Forfeited');
 
@@ -36,10 +36,11 @@ CREATE TABLE matches (
   round_id      UUID NOT NULL REFERENCES rounds(id) ON DELETE CASCADE,
   home_team_id  UUID NOT NULL REFERENCES teams(id),
   away_team_id  UUID NOT NULL REFERENCES teams(id),
-  home_score    INTEGER,
-  away_score    INTEGER,
+  home_score    INTEGER CHECK (home_score >= 0),
+  away_score    INTEGER CHECK (away_score >= 0),
   forfeit_side  TEXT CHECK (forfeit_side IN ('home', 'away', 'both')),
   status        match_status NOT NULL DEFAULT 'Scheduled',
+  venue         TEXT,
   match_date    TIMESTAMPTZ,
   created_at    TIMESTAMPTZ DEFAULT NOW(),
   CHECK (home_team_id != away_team_id)
@@ -91,7 +92,7 @@ CREATE POLICY "Auth delete matches"         ON matches         FOR DELETE USING 
 CREATE POLICY "Auth upsert snapshots"       ON round_snapshots FOR INSERT WITH CHECK (auth.role() = 'authenticated');
 CREATE POLICY "Auth update snapshots"       ON round_snapshots FOR UPDATE USING (auth.role() = 'authenticated');
 
--- ─── Seed: EBF 2025 Season (5 rounds) ───────────────────────────────────────
+-- ─── Seed: EBF 2025 Season (5 rounds + Official Teams) ────────────────────────
 -- Uncomment to seed initial data
 
 /*
@@ -101,4 +102,21 @@ INSERT INTO rounds (season_year, round_number, status) VALUES
   (2025, 3, 'Pending'),
   (2025, 4, 'Pending'),
   (2025, 5, 'Pending');
+
+-- Seed Official Men's Teams
+INSERT INTO teams (name, gender) VALUES
+  ('ጋምቤላ ከተማ', 'ወንድ'),
+  ('ሸገር ከተማ', 'ወንድ'),
+  ('ኢትዮጵያ ስፖርት አካዳሚ', 'ወንድ'),
+  ('ሀዋሳ ከተማ', 'ወንድ'),
+  ('ወልቂጤ ከተማ', 'ወንድ'),
+  ('ፋሲል ከነማ', 'ወንድ');
+
+-- Seed Official Women's Teams
+INSERT INTO teams (name, gender) VALUES
+  ('ሀዋሳ ከተማ', 'ሴት'),
+  ('ኢትዮጵያ ስፖርት አካዳሚ', 'ሴት'),
+  ('ወልቂጤ ከተማ', 'ሴት'),
+  ('ባህርዳር ከተማ', 'ሴት'),
+  ('ጋምቤላ ከተማ', 'ሴት');
 */
