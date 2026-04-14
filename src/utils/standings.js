@@ -121,13 +121,18 @@ function _processForfeit(match, home, away) {
 
   if (side === 'both') {
     home.form.push('L'); away.form.push('L')
-    home.homeL++; away.roadL++
+    home.homeL++; away.roadL++;
+    // Both teams get 0 league points in a double forfeit
   } else if (side === 'home') {
     home.homeL++; home.form.push('L')
+    // Winner gets 2 pts, score is 20-0
     away.wins++; away.leaguePts += 2; away.form.push('W'); away.roadW++
+    away.ptsFor += 20; home.ptsAgainst += 20
   } else {
     away.roadL++; away.form.push('L')
+    // Winner gets 2 pts, score is 20-0
     home.wins++; home.leaguePts += 2; home.form.push('W'); home.homeW++
+    home.ptsFor += 20; away.ptsAgainst += 20
   }
 }
 
@@ -163,7 +168,7 @@ function _resolveTiedGroup(group, allMatches) {
     const ha = h2h[a.team.id]; const hb = h2h[b.team.id]
     if (hb.leaguePts !== ha.leaguePts) return hb.leaguePts - ha.leaguePts
     if (hb.ptsDiff !== ha.ptsDiff) return hb.ptsDiff - ha.ptsDiff
-    if (hb.ptsDiff !== a.ptsDiff) return b.ptsDiff - a.ptsDiff
+    if (b.ptsDiff !== a.ptsDiff) return b.ptsDiff - a.ptsDiff
     return a.team.name.localeCompare(b.team.name)
   })
   return group
