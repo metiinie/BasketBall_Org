@@ -1,6 +1,8 @@
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useAuthStore } from '@/stores/auth.js'
 
+const authStore = useAuthStore()
 const isDarkMode = ref(false)
 
 function toggleTheme() {
@@ -25,20 +27,34 @@ onMounted(() => {
     class="h-16 flex items-center justify-between px-6 border-b transition-colors duration-300"
     style="background-color: var(--bg-card); border-color: var(--border);"
   >
-    <!-- Nav Links -->
-    <div class="flex items-center gap-6">
-      <RouterLink
-        to="/"
-        class="text-xs font-bold uppercase tracking-widest hidden md:inline-block transition-colors"
-        style="color: var(--text-muted);"
-        active-class="!text-blue-500"
-      >Standings</RouterLink>
-      <RouterLink
-        to="/matches"
-        class="text-xs font-bold uppercase tracking-widest hidden md:inline-block transition-colors"
-        style="color: var(--text-muted);"
-        active-class="!text-blue-500"
-      >Matches</RouterLink>
+    <!-- Brand & Nav Links -->
+    <div class="flex items-center gap-8">
+      <!-- Public Branding (Show only when no sidebar) -->
+      <RouterLink v-if="!authStore.isAuthenticated" to="/" class="flex items-center gap-3 group mr-2">
+        <div class="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center border shadow-sm transition-transform group-hover:scale-105"
+             style="background-color: var(--bg-surface); border-color: var(--border);">
+          <img src="/logos/ebf.png" class="w-full h-full object-cover" alt="EBF League"/>
+        </div>
+        <div class="hidden sm:block">
+          <h1 class="font-black text-xs tracking-widest leading-none uppercase" style="color: var(--text-heading);">EBF LEAGUE</h1>
+          <p class="text-[8px] font-black tracking-widest uppercase mt-0.5 opacity-60" style="color: var(--text-muted);">Basketball</p>
+        </div>
+      </RouterLink>
+
+      <div class="flex items-center gap-6">
+        <RouterLink
+          to="/"
+          class="text-xs font-bold uppercase tracking-widest transition-colors"
+          style="color: var(--text-muted);"
+          active-class="!text-blue-500"
+        >Standings</RouterLink>
+        <RouterLink
+          to="/matches"
+          class="text-xs font-bold uppercase tracking-widest transition-colors"
+          style="color: var(--text-muted);"
+          active-class="!text-blue-500"
+        >Matches</RouterLink>
+      </div>
     </div>
 
     <!-- Right Actions -->
