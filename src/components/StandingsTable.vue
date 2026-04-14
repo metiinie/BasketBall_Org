@@ -100,14 +100,17 @@ async function handleExportImage() {
         <table class="w-full text-left border-collapse">
           <thead>
             <tr style="border-bottom: 1px solid var(--border);">
-              <th class="py-3 px-4 text-[10px] font-bold uppercase tracking-wider text-center w-12" style="color: var(--text-muted);">Rank</th>
-              <th class="py-3 px-2 text-[10px] font-bold uppercase tracking-wider text-left"         style="color: var(--text-muted);">Team</th>
-              <th class="py-3 px-2 text-[10px] font-bold uppercase tracking-wider text-right w-12"  style="color: var(--text-muted);">GP</th>
-              <th class="py-3 px-2 text-[10px] font-bold uppercase tracking-wider text-right w-12"  style="color: var(--text-muted);">W</th>
-              <th class="py-3 px-2 text-[10px] font-bold uppercase tracking-wider text-right w-12"  style="color: var(--text-muted);">L</th>
-              <th class="py-3 px-3 text-[10px] font-bold uppercase tracking-wider text-right w-14"  style="color: var(--text-muted);">PD</th>
-              <th class="py-3 px-4 text-[10px] font-bold uppercase tracking-wider text-right w-16"  style="color: var(--text-muted);">Pts</th>
-              <th class="py-3 px-4 text-[10px] font-bold uppercase tracking-wider text-center w-24" style="color: var(--text-muted);">Form</th>
+              <th class="py-3 px-4 text-[9px] font-black uppercase tracking-wider text-center w-10" style="color: var(--text-muted);">Rank</th>
+              <th class="py-3 px-2 text-[9px] font-black uppercase tracking-wider text-left"         style="color: var(--text-muted);">Team</th>
+              <th class="py-3 px-2 text-[9px] font-black uppercase tracking-wider text-right w-10"  style="color: var(--text-muted);">W</th>
+              <th class="py-3 px-2 text-[9px] font-black uppercase tracking-wider text-right w-10"  style="color: var(--text-muted);">L</th>
+              <th class="py-3 px-2 text-[9px] font-black uppercase tracking-wider text-right w-14"  style="color: var(--text-muted);">PCT</th>
+              <th class="py-3 px-2 text-[9px] font-black uppercase tracking-wider text-right w-11"  style="color: var(--text-muted);">GB</th>
+              <th class="py-3 px-2 text-[9px] font-black uppercase tracking-wider text-center w-16" style="color: var(--text-muted);">Home</th>
+              <th class="py-3 px-2 text-[9px] font-black uppercase tracking-wider text-center w-16" style="color: var(--text-muted);">Road</th>
+              <th class="py-3 px-2 text-[9px] font-black uppercase tracking-wider text-right w-10"  style="color: var(--text-muted);">PD</th>
+              <th class="py-3 px-2 text-[9px] font-black uppercase tracking-wider text-right w-14"  style="color: var(--text-muted);">Strk</th>
+              <th class="py-3 px-4 text-[9px] font-black uppercase tracking-wider text-right w-11"  style="color: var(--text-muted);">Pts</th>
             </tr>
           </thead>
 
@@ -145,28 +148,31 @@ async function handleExportImage() {
               </td>
 
               <!-- Stats Columns -->
-              <td class="py-3.5 px-2 text-right tabular-nums" style="color: var(--text-secondary);">{{ entry.played }}</td>
               <td class="py-3.5 px-2 text-right font-semibold tabular-nums" style="color: var(--text-primary);">{{ entry.wins }}</td>
               <td class="py-3.5 px-2 text-right font-medium tabular-nums" style="color: var(--text-secondary);">{{ entry.losses }}</td>
-              <td class="py-3.5 px-3 text-right font-semibold tabular-nums"
+              
+              <td class="py-3.5 px-2 text-right tabular-nums text-xs font-bold" style="color: var(--text-primary);">{{ entry.pct }}</td>
+              <td class="py-3.5 px-2 text-right tabular-nums text-xs" style="color: var(--text-muted);">{{ entry.gb }}</td>
+              
+              <td class="py-3.5 px-2 text-center text-[10px] tabular-nums font-bold" style="color: var(--text-secondary);">
+                {{ entry.homeW }}-{{ entry.homeL }}
+              </td>
+              <td class="py-3.5 px-2 text-center text-[10px] tabular-nums font-bold" style="color: var(--text-secondary);">
+                {{ entry.roadW }}-{{ entry.roadL }}
+              </td>
+
+              <td class="py-3.5 px-2 text-right font-semibold tabular-nums text-xs"
                 :style="entry.ptsDiff > 0 ? 'color: #10b981;' : entry.ptsDiff < 0 ? 'color: #f43f5e;' : 'color: var(--text-secondary);'">
                 {{ entry.ptsDiff > 0 ? '+' : '' }}{{ entry.ptsDiff }}
               </td>
-              <td class="py-3.5 px-4 text-right">
-                <span class="text-base font-bold text-blue-500 tabular-nums">{{ entry.leaguePts }}</span>
+
+              <td class="py-3.5 px-2 text-right font-black tabular-nums text-xs"
+                :style="entry.streak.startsWith('W') ? 'color: #10b981;' : 'color: #f43f5e;'">
+                {{ entry.streak }}
               </td>
 
-              <!-- Form Bars -->
-              <td class="py-3.5 px-4">
-                <div class="flex justify-center gap-1.5 w-full">
-                  <div v-for="(result, fIndex) in entry.form" :key="'f-'+fIndex"
-                    class="w-2.5 h-6 rounded-sm transition-all"
-                    :class="result === 'W' ? 'bg-emerald-500' : 'bg-rose-500'"
-                    :title="result"/>
-                  <div v-for="empty in Math.max(0, 5 - entry.form.length)" :key="'e-'+empty"
-                    class="w-2.5 h-6 rounded-sm"
-                    style="background-color: var(--bg-surface);"/>
-                </div>
+              <td class="py-3.5 px-4 text-right">
+                <span class="text-sm font-black text-blue-500 tabular-nums">{{ entry.leaguePts }}</span>
               </td>
             </tr>
           </TransitionGroup>
