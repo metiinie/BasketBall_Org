@@ -2,6 +2,7 @@
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import MatchCard from '@/components/MatchCard.vue'
 import ScoreInputModal from '@/components/ScoreInputModal.vue'
+import GlobalFilter from '@/components/GlobalFilter.vue'
 import { useLeagueStore } from '@/stores/league.js'
 
 const league = useLeagueStore()
@@ -9,14 +10,22 @@ const selectedMatch = ref(null)
 const saveError = ref('')
 const saveSuccess = ref('')
 
-onMounted(async () => {
-  await league.fetchRounds()
+async function initScores() {
+  await league.fetchRounds(league.selectedSeason)
   if (league.activeRound) {
-    await league.fetchTeams()
-    await league.fetchMatches(league.activeRound.id)
+    await Promise.all([
+      league.fetchTeams(league.selectedGender),
+      league.fetchMatches(league.activeRound.id)
+    ])
     league.subscribeToMatches(league.activeRound.id)
+  } else {
+    await league.fetchTeams(league.selectedGender)
+    league.matches = []
   }
-})
+}
+
+onMounted(initScores)
+watch([() => league.selectedGender, () => league.selectedSeason], initScores)
 
 onUnmounted(() => league.unsubscribeFromMatches())
 
@@ -46,9 +55,12 @@ async function handleSaveScore({ matchId, homeScore, awayScore }) {
     <div class="flex items-center justify-between">
       <div>
         <h1 class="text-lg font-bold tracking-tight" style="color: var(--text-heading);">Score Entry</h1>
-        <p class="text-[10px] font-bold uppercase tracking-widest" style="color: var(--text-muted);">
+        <div class="mt-1">
+          <GlobalFilter />
+        </div>
+        <p class="text-[10px] font-bold uppercase tracking-widest mt-2" style="color: var(--text-muted);">
           <template v-if="league.activeRound">
-            Round {{ league.activeRound.round_number }} • {{ league.activeRound.season_year }}
+            Round {{ league.activeRound.round_number }} • {{ league.selectedSeason === 2025 ? '2025–26' : league.selectedSeason }}
           </template>
         </p>
       </div>
