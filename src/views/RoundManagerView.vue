@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useLeagueStore } from '@/stores/league.js'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import GlobalFilter from '@/components/GlobalFilter.vue'
 
 const router = useRouter()
 const league = useLeagueStore()
@@ -18,17 +19,25 @@ const success = ref('')
 // Edit Form State
 const editForm = ref({ start_date: '', end_date: '' })
 
-onMounted(async () => {
-  await league.fetchRounds()
+async function initData() {
+  await league.fetchRounds(league.selectedSeason)
   if (league.activeRound) {
     editForm.value.start_date = league.activeRound.start_date?.split('T')[0] || ''
     editForm.value.end_date = league.activeRound.end_date?.split('T')[0] || ''
     await Promise.all([
-      league.fetchTeams(),
+      league.fetchTeams(league.selectedGender),
       league.fetchMatches(league.activeRound.id),
     ])
+  } else {
+    // If no active round, still fetch teams for the current gender to show empty states correctly
+    await league.fetchTeams(league.selectedGender)
   }
-})
+}
+
+onMounted(initData)
+
+// React to global filter changes
+watch([() => league.selectedGender, () => league.selectedSeason], initData)
 
 // Compact Insights
 const roundLeaders = computed(() => league.standings.slice(0, 3))
@@ -110,6 +119,9 @@ const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 's
           <p class="text-xs mt-0.5" style="color: var(--text-muted);">Operation Control Authority Center</p>
         </div>
       </div>
+    <!-- Filters -->
+    <div class="card p-4 flex flex-col md:flex-row items-center justify-between gap-4">
+      <GlobalFilter />
       <div class="hidden sm:block text-right">
         <p class="text-[13px] font-bold uppercase tracking-widest text-slate-500">{{ today }}</p>
       </div>

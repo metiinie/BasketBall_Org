@@ -80,22 +80,11 @@ const seasonYearLabel = () => league.selectedSeason === 2025 ? '2025–26' : lea
       </div>
     </div>
 
-    <!-- Gender Filter -->
-    <div class="flex gap-2">
-      <button v-for="g in ['ወንድ', 'ሴት']" :key="g"
-        @click="selectedGender = g"
-        :class="['flex-1 py-2.5 rounded-lg text-sm font-semibold border transition-all duration-200',
-          selectedGender === g
-            ? 'bg-blue-600 text-white border-blue-600 shadow-sm shadow-blue-600/20'
-            : '']"
-        :style="selectedGender !== g ? 'color: var(--text-secondary); background-color: var(--bg-card); border-color: var(--border);' : ''"
-      >
-        {{ g === 'ወንድ' ? '♂' : '♀' }} {{ g }}
-      </button>
-    </div>
+    <!-- Global NBA-style Filters -->
+    <GlobalFilter />
 
     <!-- Round Selector -->
-    <div class="space-y-1.5">
+    <div class="space-y-1.5 pt-2">
       <h3 class="text-xs font-bold uppercase tracking-wider" style="color: var(--text-muted);">Select Round</h3>
       <RoundSelector
         v-model="selectedRound"
@@ -109,8 +98,8 @@ const seasonYearLabel = () => league.selectedSeason === 2025 ? '2025–26' : lea
       :standings="selectedRound === 'global' ? global.globalStandings : league.standings"
       :loading="league.loading || global.loading"
       :round-label="roundLabel()"
-      :gender="selectedGender"
-      :season-year="seasonYear()"
+      :gender="league.selectedGender"
+      :season-year="seasonYearLabel()"
       :is-global="selectedRound === 'global'"
       :show-exports="true"
     />
