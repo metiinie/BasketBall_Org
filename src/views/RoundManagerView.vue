@@ -80,7 +80,7 @@ async function handleUpdateRound() {
     showEditModal.value = false
     setTimeout(() => { success.value = '' }, 2000)
   } catch (e) {
-    error.value = e.message || 'Error.'
+    error.value = 'Failed to update round. Please try again.'
   } finally {
     updating.value = false
   }
@@ -94,7 +94,7 @@ async function handleUpdateStatus(id, newStatus) {
         setTimeout(() => success.value = '', 3000)
         await initData()
     } catch (e) {
-        error.value = e.message
+        error.value = t('admin.failed_save') || 'Failed to update round. Please try again.'
     } finally {
         updating.value = false
     }
@@ -108,7 +108,7 @@ async function doFinalizeRound() {
     showConfirm.value = false
     await initData()
   } catch (e) {
-    error.value = e.message
+    error.value = 'Failed to finalize round. Please try again.'
   } finally {
     finalizing.value = false
   }
@@ -122,7 +122,7 @@ async function handleCreateRound() {
         showNewRoundModal.value = false
         setTimeout(() => success.value = '', 3000)
     } catch (e) {
-        error.value = e.message
+        error.value = t('admin.failed_save') || 'Failed to create round. Please try again.'
     } finally {
         building.value = false
     }

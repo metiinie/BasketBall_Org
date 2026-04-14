@@ -101,7 +101,7 @@ async function scheduleMatch() {
     resetForm()
     setTimeout(() => successMsg.value = '', 4000)
   } catch (err) {
-    errorMsg.value = err.message || t('admin.failed_schedule')
+    errorMsg.value = t('admin.failed_schedule')
   } finally {
     submitting.value = false
   }
@@ -136,7 +136,7 @@ async function handleDelete() {
         showConfirmDelete.value = false
         matchToDelete.value = null
     } catch (err) {
-        errorMsg.value = err.message
+        errorMsg.value = t('admin.failed_save') || 'Failed to delete match. Please try again.'
     } finally {
         submitting.value = false
     }

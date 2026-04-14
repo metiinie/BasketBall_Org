@@ -47,7 +47,7 @@ async function handleSaveScore({ matchId, homeScore, awayScore }) {
     selectedMatch.value = null
     setTimeout(() => { saveSuccess.value = '' }, 2000)
   } catch (e) {
-    saveError.value = e.message || t('admin.failed_save')
+    saveError.value = t('admin.failed_save')
   }
 }
 </script>

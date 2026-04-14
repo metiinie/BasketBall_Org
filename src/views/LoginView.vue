@@ -24,8 +24,12 @@ async function handleLogin() {
   error.value = ''
   try {
     await authStore.signIn(email.value.trim(), password.value)
-    const redirect = route.query.redirect || '/admin'
-    await router.push(redirect)
+    // Prevent open-redirect attacks: only allow relative paths starting with '/'
+    const redirect = route.query.redirect
+    const safeRedirect = (typeof redirect === 'string' && redirect.startsWith('/') && !redirect.startsWith('//'))
+      ? redirect
+      : '/admin'
+    await router.push(safeRedirect)
   } catch (e) {
     error.value = t('auth.login_err_invalid')
   } finally {
