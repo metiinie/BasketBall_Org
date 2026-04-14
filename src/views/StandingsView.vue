@@ -2,6 +2,7 @@
 import { ref, watch, onMounted } from 'vue'
 import StandingsTable from '@/components/StandingsTable.vue'
 import RoundSelector from '@/components/RoundSelector.vue'
+import GlobalFilter from '@/components/GlobalFilter.vue'
 import { useLeagueStore } from '@/stores/league.js'
 import { useGlobalStore } from '@/stores/global.js'
 
@@ -9,30 +10,38 @@ const league = useLeagueStore()
 const global = useGlobalStore()
 
 const selectedRound = ref(null)
-const selectedGender = ref('ወንድ')
+
+async function refreshData() {
+  if (!selectedRound.value) return
+  
+  if (selectedRound.value === 'global') {
+    await global.fetchGlobalStandings()
+  } else {
+    await Promise.all([
+      league.fetchTeams(league.selectedGender),
+      league.fetchMatches(selectedRound.value),
+      league.subscribeToMatches(selectedRound.value),
+    ])
+  }
+}
 
 onMounted(async () => {
-  await league.fetchRounds()
+  await league.fetchRounds(league.selectedSeason)
   if (league.activeRound) selectedRound.value = league.activeRound.id
   else if (league.rounds.length > 0) selectedRound.value = league.rounds[0].id
 })
 
-watch(selectedRound, async (val) => {
-  if (!val || val === 'global') {
-    if (val === 'global') await global.fetchGlobalStandings()
-    return
+watch(() => league.selectedSeason, async (newSeason) => {
+  await league.fetchRounds(newSeason)
+  if (league.rounds.length > 0) {
+    selectedRound.value = league.rounds[0].id
+  } else {
+    selectedRound.value = null
   }
-  await Promise.all([
-    league.fetchTeams(selectedGender.value),
-    league.fetchMatches(val),
-    league.subscribeToMatches(val),
-  ])
 })
 
-watch(selectedGender, async () => {
-  if (selectedRound.value && selectedRound.value !== 'global') {
-    await league.fetchTeams(selectedGender.value)
-  }
+watch([selectedRound, () => league.selectedGender], () => {
+  refreshData()
 })
 
 const currentRound = () => league.rounds.find(r => r.id === selectedRound.value)
@@ -41,7 +50,7 @@ const roundLabel = () => {
   const r = currentRound()
   return r ? `Round ${r.round_number}` : ''
 }
-const seasonYear = () => currentRound()?.season_year ?? ''
+const seasonYearLabel = () => league.selectedSeason === 2025 ? '2025–26' : league.selectedSeason
 </script>
 
 <template>

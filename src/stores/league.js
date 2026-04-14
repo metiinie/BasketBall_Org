@@ -11,6 +11,10 @@ export const useLeagueStore = defineStore('league', () => {
   const loading = ref(false)
   const error = ref(null)
 
+  // Global Context Filters (NBA-style)
+  const selectedGender = ref('ወንድ')
+  const selectedSeason = ref(2025)
+
   /** Reactive standings computed from current round matches + teams */
   const standings = computed(() => {
     if (!teams.value.length) return []
@@ -175,13 +179,22 @@ export const useLeagueStore = defineStore('league', () => {
   }
 
   async function markMatchForfeit(matchId, forfeitingTeamSide) {
+    // Standard FIBA rule: Winner gets 20, Forfeiter gets 0 (or null but we'll use 0 for DB score consistency if needed)
+    // However, the standings calculator will award 20 virtual points anyway.
+    // For direct DB clarity as requested: 20 - 0.
     const update = forfeitingTeamSide === 'home'
-      ? { home_score: null, away_score: null, status: 'Forfeited', forfeit_side: 'home' }
-      : { home_score: null, away_score: null, status: 'Forfeited', forfeit_side: 'away' }
-    const { data, error: err } = await supabase.from('matches').update(update).eq('id', matchId).select().single()
+      ? { home_score: 0, away_score: 20, status: 'Forfeited', forfeit_side: 'home' }
+      : { home_score: 20, away_score: 0, status: 'Forfeited', forfeit_side: 'away' }
+    
+    const { data, error: err } = await supabase.from('matches').update(update).eq('id', matchId).select(`
+      *,
+      home_team:teams!home_team_id(id, name, gender, logo_url),
+      away_team:teams!away_team_id(id, name, gender, logo_url)
+    `).single()
+    
     if (err) throw err
     const idx = matches.value.findIndex(m => m.id === matchId)
-    if (idx !== -1) matches.value[idx] = { ...matches.value[idx], ...data }
+    if (idx !== -1) matches.value[idx] = data
     return data
   }
 
@@ -224,6 +237,7 @@ export const useLeagueStore = defineStore('league', () => {
 
   return {
     teams, rounds, activeRound, matches, standings, loading, error,
+    selectedGender, selectedSeason,
     fetchTeams, createTeam, updateTeam, deleteTeam,
     fetchRounds,
     fetchMatches, createMatch, subscribeToMatches, unsubscribeFromMatches,
