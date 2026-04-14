@@ -97,10 +97,11 @@ const scrollToDate = (dateStr) => {
           v-for="date in allDates" 
           :key="date"
           @click="scrollToDate(date)"
-          class="flex-shrink-0 px-6 py-3 rounded-xl border border-white/5 bg-slate-900/50 hover:bg-slate-800 transition-all text-center min-w-[100px]"
+          class="flex-shrink-0 px-6 py-3 rounded-xl border transition-all text-center min-w-[100px] hover:shadow-md active:scale-95"
+          style="background-color: var(--bg-card); border-color: var(--border);"
         >
           <p class="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-0.5">DATE</p>
-          <p class="text-sm font-black text-white">{{ date }}</p>
+          <p class="text-sm font-black" style="color: var(--text-primary);">{{ date }}</p>
         </button>
       </div>
     </div>
