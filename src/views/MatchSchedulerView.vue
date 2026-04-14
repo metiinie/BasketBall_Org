@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useLeagueStore } from '@/stores/league.js'
 import GlobalFilter from '@/components/GlobalFilter.vue'
@@ -18,12 +18,23 @@ const submitting = ref(false)
 const errorMsg = ref('')
 const successMsg = ref('')
 
-onMounted(async () => {
-  await league.fetchRounds()
-  await league.fetchTeams()
+async function initScheduler() {
+  await league.fetchRounds(league.selectedSeason)
+  await league.fetchTeams() // Fetch all teams once, computed will filter by gender
   if (league.activeRound) {
     await league.fetchMatches(league.activeRound.id)
+  } else {
+    league.matches = []
   }
+}
+
+onMounted(initScheduler)
+
+watch(() => league.selectedSeason, initScheduler)
+watch(() => league.selectedGender, () => {
+  // Reset team selection if gender changes to prevent mismatched IDs
+  matchData.value.home_team_id = ''
+  matchData.value.away_team_id = ''
 })
 
 const filteredTeams = computed(() =>
