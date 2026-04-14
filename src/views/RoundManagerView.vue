@@ -111,7 +111,7 @@ const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 's
         </div>
       </div>
       <div class="hidden sm:block text-right">
-        <p class="text-[10px] uppercase font-black tracking-widest text-slate-500">{{ today }}</p>
+        <p class="text-[13px] font-bold uppercase tracking-widest text-slate-500">{{ today }}</p>
       </div>
     </div>
 
@@ -122,19 +122,19 @@ const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 's
       <div class="lg:col-span-8 space-y-4">
         <div v-if="league.activeRound" class="card overflow-hidden">
           <!-- Row 1: Status & Config -->
-          <div class="px-5 py-3 border-b flex items-center justify-between bg-slate-500/5" style="border-color: var(--border);">
-            <div class="flex items-center gap-2">
+          <div class="px-5 py-4 border-b flex items-center justify-between bg-slate-500/5" style="border-color: var(--border);">
+            <div class="flex items-center gap-3">
               <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span class="text-[10px] font-bold uppercase tracking-widest" style="color: var(--text-primary);">Operational Round {{ league.activeRound.round_number }}</span>
+              <span class="text-xs font-bold uppercase tracking-[0.15em]" style="color: var(--text-primary);">Operational Round {{ league.activeRound.round_number }}</span>
             </div>
-            <button @click="showEditModal = true" class="text-[10px] font-bold uppercase text-blue-500 hover:text-blue-400">Configure Dates</button>
+            <button @click="showEditModal = true" class="text-xs font-bold uppercase text-blue-500 hover:text-blue-400">Configure Dates</button>
           </div>
 
           <!-- Row 2: Insights Grid -->
-          <div class="p-5 grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-10">
             <!-- Round Leaders (Mini) -->
-            <div class="space-y-4">
-              <h4 class="text-[9px] font-black uppercase tracking-widest opacity-50">Round Leaders</h4>
+            <div class="space-y-5">
+              <h4 class="text-[11px] font-black uppercase tracking-widest opacity-60">Round Leaders</h4>
               <div class="space-y-2">
                 <div v-for="s in roundLeaders" :key="s.team.id" class="flex items-center gap-3 p-2 rounded-xl border bg-slate-500/5" style="border-color: var(--border);">
                   <div class="w-8 h-8 rounded-lg overflow-hidden bg-white flex-shrink-0">
@@ -142,9 +142,9 @@ const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 's
                   </div>
                   <div class="flex-1 min-w-0">
                     <p class="text-xs font-bold truncate">{{ s.team.name }}</p>
-                    <p class="text-[9px] font-bold text-blue-500 uppercase tracking-tighter">{{ s.wins }}W - {{ s.losses }}L</p>
+                    <p class="text-[11px] font-bold text-blue-500 uppercase tracking-tighter">{{ s.wins }}W - {{ s.losses }}L</p>
                   </div>
-                  <span class="text-[10px] font-black tabular-nums opacity-60">#{{ s.rank }}</span>
+                  <span class="text-[11px] font-black tabular-nums opacity-60">#{{ s.rank }}</span>
                 </div>
               </div>
             </div>
@@ -152,46 +152,46 @@ const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 's
             <!-- Temporal & Action Feed -->
             <div class="space-y-6">
               <!-- Dates Card -->
-              <div class="p-3.5 rounded-xl border border-dashed flex items-center gap-6" style="border-color: var(--border);">
+              <div class="p-4 rounded-xl border border-dashed flex items-center gap-8" style="border-color: var(--border);">
                 <div class="flex-1">
-                  <p class="text-[8px] font-bold uppercase tracking-widest opacity-50">Start</p>
-                  <p class="text-[11px] font-bold">{{ formatDate(league.activeRound.start_date) }}</p>
+                  <p class="text-[10px] font-bold uppercase tracking-widest opacity-60">Start</p>
+                  <p class="text-xs font-bold">{{ formatDate(league.activeRound.start_date) }}</p>
                 </div>
-                <div class="w-px h-6 bg-slate-700/50"></div>
+                <div class="w-px h-8 bg-slate-700/50"></div>
                 <div class="flex-1">
-                  <p class="text-[8px] font-bold uppercase tracking-widest opacity-50">End</p>
-                  <p class="text-[11px] font-bold">{{ formatDate(league.activeRound.end_date) }}</p>
+                  <p class="text-[10px] font-bold uppercase tracking-widest opacity-60">End</p>
+                  <p class="text-xs font-bold">{{ formatDate(league.activeRound.end_date) }}</p>
                 </div>
               </div>
 
               <!-- Activity Feed (Compact) -->
-              <div class="space-y-3">
-                <div v-if="recentMatch" class="flex items-center gap-3">
-                  <span class="w-1.5 h-1.5 rounded-full bg-blue-500/50"></span>
-                  <p class="text-[10px] font-bold truncate flex-1 opacity-80">{{ recentMatch.home_team.name }} {{ recentMatch.home_score }}:{{ recentMatch.away_score }} {{ recentMatch.away_team.name }}</p>
+              <div class="space-y-4">
+                <div v-if="recentMatch" class="flex items-center gap-4">
+                  <span class="w-2 h-2 rounded-full bg-blue-500/50"></span>
+                  <p class="text-[12px] font-bold truncate flex-1 opacity-80">{{ recentMatch.home_team.name }} {{ recentMatch.home_score }}:{{ recentMatch.away_score }} {{ recentMatch.away_team.name }}</p>
                 </div>
-                <div v-if="upcomingMatch" class="flex items-center gap-3">
-                  <span class="w-1.5 h-1.5 rounded-full bg-amber-500/50"></span>
-                  <p class="text-[10px] font-bold truncate flex-1 opacity-80 italic">Next: {{ upcomingMatch.home_team.name }} vs {{ upcomingMatch.away_team.name }}</p>
+                <div v-if="upcomingMatch" class="flex items-center gap-4">
+                  <span class="w-2 h-2 rounded-full bg-amber-500/50"></span>
+                  <p class="text-[12px] font-bold truncate flex-1 opacity-80 italic">Next: {{ upcomingMatch.home_team.name }} vs {{ upcomingMatch.away_team.name }}</p>
                 </div>
               </div>
             </div>
           </div>
 
           <!-- Row 3: Progress & Finalise -->
-          <div class="px-5 py-4 border-t bg-slate-500/5" style="border-color: var(--border);">
-            <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div class="flex-1 w-full space-y-2">
-                <div class="flex justify-between text-[9px] font-bold uppercase tracking-widest opacity-60">
+          <div class="px-5 py-5 border-t bg-slate-500/5" style="border-color: var(--border);">
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-6">
+              <div class="flex-1 w-full space-y-3">
+                <div class="flex justify-between text-[11px] font-bold uppercase tracking-widest opacity-70">
                   <span>Report Sync Status</span>
                   <span>{{ progressPct }}%</span>
                 </div>
-                <div class="h-1.5 rounded-full overflow-hidden bg-slate-900/40">
+                <div class="h-2 rounded-full overflow-hidden bg-slate-900/40">
                   <div :style="`width: ${progressPct}%`" :class="['h-full transition-all duration-700', allCompleted ? 'bg-emerald-500' : 'bg-blue-600']"></div>
                 </div>
               </div>
               <button @click="showConfirm = true" :disabled="!league.matches.length" 
-                class="btn-primary w-full sm:w-auto h-9 px-6 text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-600/20">
+                class="btn-primary w-full sm:w-auto h-11 px-8 text-xs font-black uppercase tracking-[0.1em] shadow-xl shadow-blue-600/20">
                 Finalise Round
               </button>
             </div>
@@ -239,18 +239,18 @@ const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 's
             <h2 class="text-sm font-bold">Round Configuration</h2>
             <button @click="showEditModal = false" class="btn-icon"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M6 18L18 6M6 6l12 12"/></svg></button>
           </div>
-          <div class="p-6 space-y-5">
-            <div class="grid grid-cols-2 gap-4">
-              <div class="space-y-1.5">
-                <label class="text-[9px] font-black uppercase tracking-widest opacity-50">Start</label>
-                <input v-model="editForm.start_date" type="date" class="input-field h-10 text-xs px-3"/>
+          <div class="p-6 space-y-6">
+            <div class="grid grid-cols-2 gap-6">
+              <div class="space-y-2">
+                <label class="text-[11px] font-black uppercase tracking-widest opacity-60">Start Date</label>
+                <input v-model="editForm.start_date" type="date" class="input-field h-11 text-sm px-3"/>
               </div>
-              <div class="space-y-1.5">
-                <label class="text-[9px] font-black uppercase tracking-widest opacity-50">End</label>
-                <input v-model="editForm.end_date" type="date" class="input-field h-10 text-xs px-3"/>
+              <div class="space-y-2">
+                <label class="text-[11px] font-black uppercase tracking-widest opacity-60">End Date</label>
+                <input v-model="editForm.end_date" type="date" class="input-field h-11 text-sm px-3"/>
               </div>
             </div>
-            <button @click="handleUpdateRound" :disabled="updating" class="btn-primary w-full h-10 text-[10px] font-black">SAVE SYNC</button>
+            <button @click="handleUpdateRound" :disabled="updating" class="btn-primary w-full h-11 text-xs font-black">SYNC CHANGES</button>
           </div>
         </div>
       </div>
