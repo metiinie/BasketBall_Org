@@ -122,17 +122,18 @@ function _processForfeit(match, home, away) {
 
   if (side === 'both') {
     home.form.push('L'); away.form.push('L')
+    home.losses++; away.losses++
     home.homeL++; away.roadL++;
     home.forfeits++; away.forfeits++
     // Both teams get 0 league points in a double forfeit
   } else if (side === 'home') {
-    home.homeL++; home.form.push('L')
+    home.losses++; home.homeL++; home.form.push('L')
     home.forfeits++
     // Winner gets 2 pts, score is 20-0
     away.wins++; away.leaguePts += 2; away.form.push('W'); away.roadW++
     away.ptsFor += 20; home.ptsAgainst += 20
   } else {
-    away.roadL++; away.form.push('L')
+    away.losses++; away.roadL++; away.form.push('L')
     away.forfeits++
     // Winner gets 2 pts, score is 20-0
     home.wins++; home.leaguePts += 2; home.form.push('W'); home.homeW++
