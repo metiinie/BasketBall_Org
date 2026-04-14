@@ -77,6 +77,15 @@ export const useLeagueStore = defineStore('league', () => {
     }
   }
 
+  async function updateRound(id, payload) {
+    const { data, error: err } = await supabase.from('rounds').update(payload).eq('id', id).select().single()
+    if (err) throw err
+    const idx = rounds.value.findIndex(r => r.id === id)
+    if (idx !== -1) rounds.value[idx] = data
+    if (activeRound.value?.id === id) activeRound.value = data
+    return data
+  }
+
   // ─── Matches ─────────────────────────────────────────────────────────────
 
   async function createMatch(payload) {
