@@ -31,15 +31,25 @@ const matchesByDate = computed(() => {
 
   const groups = {}
   list.forEach(m => {
-    const date = new Date(m.match_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
-    if (!groups[date]) groups[date] = []
-    groups[date].push(m)
+    const d = new Date(m.match_date)
+    const dateStr = d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+    if (!groups[dateStr]) groups[dateStr] = []
+    groups[dateStr].push(m)
   })
   
-  // Convert to array and sort by date
   return Object.entries(groups).map(([date, matches]) => ({ date, matches }))
     .sort((a, b) => new Date(a.date) - new Date(b.date))
 })
+
+const allDates = computed(() => {
+  const dates = league.matches.map(m => new Date(m.match_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }))
+  return [...new Set(dates)].sort((a, b) => new Date(a) - new Date(b))
+})
+
+const scrollToDate = (dateStr) => {
+  const el = document.getElementById(`date-${dateStr}`)
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
 </script>
 
 <template>
@@ -56,27 +66,42 @@ const matchesByDate = computed(() => {
       </div>
     </div>
 
-    <!-- Controls -->
-    <div class="flex flex-col lg:flex-row gap-6 items-start lg:items-center justify-between">
-      <div class="w-full lg:max-w-xs">
-        <RoundSelector
-          :model-value="selectedRound"
-          @update:model-value="onRoundChange"
-          :rounds="league.rounds"
-          :show-global="false"
-        />
+    <!-- Controls & Date Strip -->
+    <div class="space-y-6">
+      <div class="flex flex-col lg:flex-row gap-6 items-start lg:items-center justify-between">
+        <div class="w-full lg:max-w-xs">
+          <RoundSelector
+            :model-value="selectedRound"
+            @update:model-value="onRoundChange"
+            :rounds="league.rounds"
+            :show-global="false"
+          />
+        </div>
+
+        <!-- Status Filters -->
+        <div class="flex flex-wrap gap-2">
+          <button
+            v-for="f in ['All', 'Today', 'Scheduled', 'Completed']"
+            :key="f"
+            @click="filter = f"
+            :class="['px-5 py-2 rounded-full text-[11px] font-black uppercase tracking-widest border transition-all',
+              filter === f ? 'bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-600/20' : '']"
+            :style="filter !== f ? 'color: var(--text-secondary); background-color: var(--bg-card); border-color: var(--border);' : ''"
+          >{{ f }}</button>
+        </div>
       </div>
 
-      <!-- Status Filters -->
-      <div class="flex flex-wrap gap-2">
-        <button
-          v-for="f in ['All', 'Today', 'Scheduled', 'Completed']"
-          :key="f"
-          @click="filter = f"
-          :class="['px-5 py-2 rounded-full text-[11px] font-black uppercase tracking-widest border transition-all',
-            filter === f ? 'bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-600/20' : '']"
-          :style="filter !== f ? 'color: var(--text-secondary); background-color: var(--bg-card); border-color: var(--border);' : ''"
-        >{{ f }}</button>
+      <!-- NBA Horizontal Date Strip -->
+      <div class="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
+        <button 
+          v-for="date in allDates" 
+          :key="date"
+          @click="scrollToDate(date)"
+          class="flex-shrink-0 px-6 py-3 rounded-xl border border-white/5 bg-slate-900/50 hover:bg-slate-800 transition-all text-center min-w-[100px]"
+        >
+          <p class="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-0.5">DATE</p>
+          <p class="text-sm font-black text-white">{{ date }}</p>
+        </button>
       </div>
     </div>
 
@@ -89,7 +114,9 @@ const matchesByDate = computed(() => {
 
     <!-- Matches Grouped by Date -->
     <div v-else-if="matchesByDate.length > 0" class="space-y-10">
-      <div v-for="group in matchesByDate" :key="group.date" class="space-y-4">
+      <div v-for="group in matchesByDate" :key="group.date" 
+           :id="`date-${new Date(group.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}`"
+           class="space-y-4 scroll-mt-24">
         <!-- Date Header -->
         <h2 class="text-[11px] font-black uppercase tracking-[0.2em] px-1 py-1 border-b" 
             style="color: var(--text-muted); border-color: var(--border);">
