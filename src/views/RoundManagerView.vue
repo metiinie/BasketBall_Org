@@ -136,15 +136,18 @@ const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 's
             <div class="space-y-5">
               <h4 class="text-[11px] font-black uppercase tracking-widest opacity-60">Round Leaders</h4>
               <div class="space-y-2">
-                <div v-for="s in roundLeaders" :key="s.team.id" class="flex items-center gap-3 p-2 rounded-xl border bg-slate-500/5" style="border-color: var(--border);">
-                  <div class="w-8 h-8 rounded-lg overflow-hidden bg-white flex-shrink-0">
-                    <img v-if="s.team.logo_url" :src="s.team.logo_url" class="w-full h-full object-cover"/>
+                <div v-for="s in roundLeaders" :key="s.team.id" class="flex items-center gap-4 p-3 rounded-2xl border bg-slate-500/5 transition-all hover:bg-slate-500/10" style="border-color: var(--border);">
+                  <div class="relative">
+                    <div class="w-10 h-10 rounded-xl overflow-hidden bg-white flex-shrink-0 shadow-sm">
+                      <img v-if="s.team.logo_url" :src="s.team.logo_url" class="w-full h-full object-cover"/>
+                    </div>
+                    <div class="absolute -top-1.5 -left-1.5 w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px] font-black border border-slate-900">#{{ s.rank }}</div>
                   </div>
                   <div class="flex-1 min-w-0">
-                    <p class="text-xs font-bold truncate">{{ s.team.name }}</p>
-                    <p class="text-[11px] font-bold text-blue-500 uppercase tracking-tighter">{{ s.wins }}W - {{ s.losses }}L</p>
+                    <p class="text-sm font-bold truncate">{{ s.team.name }}</p>
+                    <p class="text-[13px] font-bold text-blue-500 uppercase tracking-tighter">{{ s.wins }}W - {{ s.losses }}L</p>
                   </div>
-                  <span class="text-[11px] font-black tabular-nums opacity-60">#{{ s.rank }}</span>
+                  <span class="text-[12px] font-black tabular-nums opacity-60 px-2 py-1 bg-slate-900/50 rounded-lg">{{ s.leaguePts }} PTS</span>
                 </div>
               </div>
             </div>
@@ -152,27 +155,40 @@ const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 's
             <!-- Temporal & Action Feed -->
             <div class="space-y-6">
               <!-- Dates Card -->
-              <div class="p-4 rounded-xl border border-dashed flex items-center gap-8" style="border-color: var(--border);">
+              <div class="p-5 rounded-2xl border border-dashed flex items-center gap-10" style="border-color: var(--border);">
                 <div class="flex-1">
-                  <p class="text-[10px] font-bold uppercase tracking-widest opacity-60">Start</p>
-                  <p class="text-xs font-bold">{{ formatDate(league.activeRound.start_date) }}</p>
+                  <p class="text-[11px] font-black uppercase tracking-widest opacity-60">Start Date</p>
+                  <p class="text-[14px] font-bold mt-1">{{ formatDate(league.activeRound.start_date) }}</p>
                 </div>
-                <div class="w-px h-8 bg-slate-700/50"></div>
+                <div class="w-px h-10 bg-slate-700/50"></div>
                 <div class="flex-1">
-                  <p class="text-[10px] font-bold uppercase tracking-widest opacity-60">End</p>
-                  <p class="text-xs font-bold">{{ formatDate(league.activeRound.end_date) }}</p>
+                  <p class="text-[11px] font-black uppercase tracking-widest opacity-60">End Date</p>
+                  <p class="text-[14px] font-bold mt-1">{{ formatDate(league.activeRound.end_date) }}</p>
                 </div>
               </div>
 
-              <!-- Activity Feed (Compact) -->
+              <!-- Action Feed (Beautiful Cards) -->
               <div class="space-y-4">
-                <div v-if="recentMatch" class="flex items-center gap-4">
-                  <span class="w-2 h-2 rounded-full bg-blue-500/50"></span>
-                  <p class="text-[12px] font-bold truncate flex-1 opacity-80">{{ recentMatch.home_team.name }} {{ recentMatch.home_score }}:{{ recentMatch.away_score }} {{ recentMatch.away_team.name }}</p>
+                <div v-if="recentMatch" class="group">
+                  <p class="text-[10px] font-black uppercase tracking-widest opacity-40 mb-2 ml-1">Latest Result</p>
+                  <div class="flex items-center gap-4 p-3 rounded-2xl border bg-gradient-to-r from-blue-600/10 to-transparent" style="border-color: var(--border);">
+                    <span class="text-[13px] font-bold truncate flex-1 text-right">{{ recentMatch.home_team.name }}</span>
+                    <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900 border border-blue-500/30 font-black tabular-nums text-[14px] shadow-lg shadow-blue-500/10">
+                      <span :class="recentMatch.home_score > recentMatch.away_score ? 'text-blue-500' : ''">{{ recentMatch.home_score }}</span>
+                      <span class="opacity-20">:</span>
+                      <span :class="recentMatch.away_score > recentMatch.home_score ? 'text-blue-500' : ''">{{ recentMatch.away_score }}</span>
+                    </div>
+                    <span class="text-[13px] font-bold truncate flex-1">{{ recentMatch.away_team.name }}</span>
+                  </div>
                 </div>
-                <div v-if="upcomingMatch" class="flex items-center gap-4">
-                  <span class="w-2 h-2 rounded-full bg-amber-500/50"></span>
-                  <p class="text-[12px] font-bold truncate flex-1 opacity-80 italic">Next: {{ upcomingMatch.home_team.name }} vs {{ upcomingMatch.away_team.name }}</p>
+
+                <div v-if="upcomingMatch">
+                  <p class="text-[10px] font-black uppercase tracking-widest opacity-40 mb-2 ml-1">On Deck</p>
+                  <div class="flex items-center justify-between gap-4 p-3 rounded-2xl border border-dashed hover:border-blue-500/30 transition-colors" style="border-color: var(--border);">
+                    <span class="text-[13px] font-bold truncate opacity-80">{{ upcomingMatch.home_team.name }}</span>
+                    <span class="text-[9px] font-black text-slate-500 italic">VS</span>
+                    <span class="text-[13px] font-bold truncate opacity-80">{{ upcomingMatch.away_team.name }}</span>
+                  </div>
                 </div>
               </div>
             </div>
