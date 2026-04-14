@@ -2,12 +2,12 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useLeagueStore } from '@/stores/league.js'
+import GlobalFilter from '@/components/GlobalFilter.vue'
 
 const router = useRouter()
 const league = useLeagueStore()
 
 const matchData = ref({
-  gender: 'ወንድ',
   home_team_id: '',
   away_team_id: '',
   match_date: '',
@@ -27,7 +27,7 @@ onMounted(async () => {
 })
 
 const filteredTeams = computed(() =>
-  league.teams.filter(t => t.gender === matchData.value.gender)
+  league.teams.filter(t => t.gender === league.selectedGender)
 )
 
 const recentSchedules = computed(() =>
@@ -134,23 +134,9 @@ const statusBadge = (status) => {
             <p class="text-xs mt-0.5" style="color: var(--text-muted);">Fill in all required fields to publish the match</p>
           </div>
 
-          <!-- Division Selector -->
-          <div>
-            <label class="block text-xs font-semibold mb-2" style="color: var(--text-secondary);">Division</label>
-            <div class="flex gap-2">
-              <button type="button"
-                @click="matchData.gender = 'ወንድ'; matchData.home_team_id = ''; matchData.away_team_id = ''"
-                :class="['flex-1 py-1.5 rounded-lg text-xs font-bold border transition-all',
-                  matchData.gender === 'ወንድ' ? 'bg-blue-600 text-white border-blue-600 shadow-sm' : '']"
-                :style="matchData.gender !== 'ወንድ' ? 'color: var(--text-secondary); background-color: var(--bg-card); border-color: var(--border);' : ''"
-              >Men's Division</button>
-              <button type="button"
-                @click="matchData.gender = 'ሴት'; matchData.home_team_id = ''; matchData.away_team_id = ''"
-                :class="['flex-1 py-1.5 rounded-lg text-xs font-bold border transition-all',
-                  matchData.gender === 'ሴት' ? 'bg-blue-600 text-white border-blue-600 shadow-sm' : '']"
-                :style="matchData.gender !== 'ሴት' ? 'color: var(--text-secondary); background-color: var(--bg-card); border-color: var(--border);' : ''"
-              >Women's Division</button>
-            </div>
+          <!-- Global Filter (Gender / Season) -->
+          <div class="p-4 rounded-xl border bg-slate-500/5 mb-2" style="border-color: var(--border);">
+            <GlobalFilter />
           </div>
 
           <!-- Teams Selection -->

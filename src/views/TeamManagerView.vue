@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useLeagueStore } from '@/stores/league.js'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import GlobalFilter from '@/components/GlobalFilter.vue'
 
 const router = useRouter()
 const league = useLeagueStore()
@@ -19,7 +20,7 @@ const showForm = ref(false)
 const form = ref({ name: '', gender: 'ወንድ', logo_url: '' })
 
 const filteredTeams = computed(() =>
-  league.teams.filter(t => t.gender === genderTab.value)
+  league.teams.filter(t => t.gender === league.selectedGender)
 )
 
 const menCount = computed(() => league.teams.filter(t => t.gender === 'ወንድ').length)
@@ -201,18 +202,10 @@ function teamInitial(team) {
       </div>
     </Transition>
 
-    <!-- Team List -->
+    <!-- Global Filter & Tabs -->
     <div class="card overflow-hidden">
-      <!-- Tabs -->
-      <div class="flex border-b" style="background-color: var(--bg-surface); border-color: var(--border);">
-        <button v-for="g in ['ወንድ', 'ሴት']" :key="g"
-          @click="genderTab = g"
-          class="flex-1 py-4 text-[10px] font-bold uppercase tracking-widest transition-all relative"
-          :style="genderTab === g ? 'color: #3b82f6;' : 'color: var(--text-muted);'"
-        >
-          {{ g === 'ወንድ' ? 'Men' : 'Women' }} Division ({{ g === 'ወንድ' ? menCount : womenCount }})
-          <div v-if="genderTab === g" class="absolute bottom-0 left-0 w-full h-0.5 bg-blue-500"></div>
-        </button>
+      <div class="p-4 border-b" style="border-color: var(--border); background-color: var(--bg-surface);">
+        <GlobalFilter />
       </div>
 
       <!-- List -->
