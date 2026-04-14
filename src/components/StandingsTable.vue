@@ -113,12 +113,14 @@ async function handleExportImage() {
       </div>
 
       <!-- Table -->
-      <div class="overflow-x-auto relative">
+      <div class="overflow-x-auto relative shadow-sm">
         <table class="w-full text-left border-collapse min-w-[800px]">
           <thead>
-            <tr class="bg-slate-900/40" style="border-bottom: 2px solid var(--border);">
-              <th class="sticky left-0 z-20 bg-[#111] py-4 px-4 text-[10px] font-black uppercase tracking-wider text-center w-12" style="color: var(--text-muted);" title="Rank">#</th>
-              <th class="sticky left-12 z-20 bg-[#111] py-4 px-2 text-[10px] font-black uppercase tracking-wider text-left min-w-[180px]" style="color: var(--text-muted);">Team</th>
+            <tr class="transition-colors" style="background-color: var(--bg-surface); border-bottom: 2px solid var(--border);">
+              <th class="sticky left-0 z-20 py-4 px-4 text-[10px] font-black uppercase tracking-wider text-center w-12" 
+                  style="background-color: var(--bg-card); color: var(--text-muted); border-right: 1px solid var(--border);" title="Rank">#</th>
+              <th class="sticky left-12 z-20 py-4 px-3 text-[10px] font-black uppercase tracking-wider text-left min-w-[180px]" 
+                  style="background-color: var(--bg-card); color: var(--text-muted); border-right: 1px solid var(--border);">Team</th>
               <th class="py-4 px-2 text-[10px] font-black uppercase tracking-wider text-right w-12"  style="color: var(--text-muted);" title="Wins">W</th>
               <th class="py-4 px-2 text-[10px] font-black uppercase tracking-wider text-right w-12"  style="color: var(--text-muted);" title="Losses">L</th>
               <th class="py-4 px-2 text-[10px] font-black uppercase tracking-wider text-right w-16"  style="color: var(--text-muted);" title="Winning Percentage">PCT</th>
@@ -137,25 +139,28 @@ async function handleExportImage() {
             <tr
               v-for="(entry, index) in standingsWithTie"
               :key="entry.team.id"
-              class="group transition-colors border-b hover:bg-white/5"
+              class="group transition-colors border-b hover:bg-slate-500/5"
               style="border-color: var(--border);"
             >
               <!-- Rank (Sticky) -->
-              <td class="sticky left-0 z-10 bg-[#111] py-4 px-4 text-center group-hover:bg-slate-800 transition-colors">
-                <span class="text-sm font-black italic" :class="index < 3 ? 'text-amber-500' : 'text-slate-400'">
+              <td class="sticky left-0 z-10 py-4 px-4 text-center transition-colors shadow-[1px_0_0_0_rgba(0,0,0,0.05)]"
+                  style="background-color: var(--bg-card); border-right: 1px solid var(--border);">
+                <span class="text-sm font-black italic" :class="index < 3 ? 'text-amber-500' : ''" :style="index < 3 ? '' : 'color: var(--text-muted);'">
                   {{ index + 1 }}
                 </span>
               </td>
 
               <!-- Team (Sticky) -->
-              <td class="sticky left-12 z-10 bg-[#111] py-4 px-2 group-hover:bg-slate-800 transition-colors">
+              <td class="sticky left-12 z-10 py-4 px-3 transition-colors shadow-[1px_0_0_0_rgba(0,0,0,0.05)]" 
+                  style="background-color: var(--bg-card); border-right: 1px solid var(--border);">
                 <div class="flex items-center gap-3">
-                  <div class="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold overflow-hidden shrink-0 border border-white/5 bg-slate-900 shadow-lg">
+                  <div class="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold overflow-hidden shrink-0 border bg-surface"
+                       style="border-color: var(--border); background-color: var(--bg-surface);">
                     <img v-if="entry.team.logo_url" :src="entry.team.logo_url" class="w-full h-full object-cover"/>
-                    <span v-else>{{ teamInitial(entry.team) }}</span>
+                    <span v-else style="color: var(--text-muted);">{{ teamInitial(entry.team) }}</span>
                   </div>
                   <div class="flex flex-col text-left">
-                    <span class="font-black text-sm truncate leading-tight group-hover:text-blue-500 transition-colors" style="color: var(--text-primary);">
+                    <span class="font-black text-sm truncate leading-tight transition-colors" style="color: var(--text-primary);">
                       {{ entry.team.name }}
                     </span>
                     <span v-if="entry.isTied" class="text-[9px] font-black uppercase tracking-widest text-blue-500 mt-0.5">Statistical Tie</span>
