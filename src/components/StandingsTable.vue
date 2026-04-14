@@ -100,17 +100,19 @@ async function handleExportImage() {
         <table class="w-full text-left border-collapse">
           <thead>
             <tr style="border-bottom: 1px solid var(--border);">
-              <th class="py-3 px-4 text-[9px] font-black uppercase tracking-wider text-center w-10" style="color: var(--text-muted);">Rank</th>
+              <th class="py-3 px-4 text-[9px] font-black uppercase tracking-wider text-center w-10" style="color: var(--text-muted);" title="Rank">#</th>
               <th class="py-3 px-2 text-[9px] font-black uppercase tracking-wider text-left"         style="color: var(--text-muted);">Team</th>
-              <th class="py-3 px-2 text-[9px] font-black uppercase tracking-wider text-right w-10"  style="color: var(--text-muted);">W</th>
-              <th class="py-3 px-2 text-[9px] font-black uppercase tracking-wider text-right w-10"  style="color: var(--text-muted);">L</th>
-              <th class="py-3 px-2 text-[9px] font-black uppercase tracking-wider text-right w-14"  style="color: var(--text-muted);">PCT</th>
-              <th class="py-3 px-2 text-[9px] font-black uppercase tracking-wider text-right w-11"  style="color: var(--text-muted);">GB</th>
-              <th class="py-3 px-2 text-[9px] font-black uppercase tracking-wider text-center w-16" style="color: var(--text-muted);">Home</th>
-              <th class="py-3 px-2 text-[9px] font-black uppercase tracking-wider text-center w-16" style="color: var(--text-muted);">Road</th>
-              <th class="py-3 px-2 text-[9px] font-black uppercase tracking-wider text-right w-10"  style="color: var(--text-muted);">PD</th>
-              <th class="py-3 px-2 text-[9px] font-black uppercase tracking-wider text-right w-14"  style="color: var(--text-muted);">Strk</th>
-              <th class="py-3 px-4 text-[9px] font-black uppercase tracking-wider text-right w-11"  style="color: var(--text-muted);">Pts</th>
+              <th class="py-3 px-2 text-[9px] font-black uppercase tracking-wider text-right w-10"  style="color: var(--text-muted);" title="Wins">W</th>
+              <th class="py-3 px-2 text-[9px] font-black uppercase tracking-wider text-right w-10"  style="color: var(--text-muted);" title="Losses">L</th>
+              <th class="py-3 px-2 text-[9px] font-black uppercase tracking-wider text-right w-14"  style="color: var(--text-muted);" title="Winning Percentage">PCT</th>
+              <th class="py-3 px-2 text-[9px] font-black uppercase tracking-wider text-right w-11"  style="color: var(--text-muted);" title="Games Behind">GB</th>
+              <th class="py-3 px-2 text-[9px] font-black uppercase tracking-wider text-center w-16" style="color: var(--text-muted);" title="Home Record">Home</th>
+              <th class="py-3 px-2 text-[9px] font-black uppercase tracking-wider text-center w-16" style="color: var(--text-muted);" title="Road Record">Road</th>
+              <th class="py-3 px-2 text-[9px] font-black uppercase tracking-wider text-right w-11"  style="color: var(--text-muted);" title="Points For (Mark)">PF</th>
+              <th class="py-3 px-2 text-[9px] font-black uppercase tracking-wider text-right w-11"  style="color: var(--text-muted);" title="Points Against">PA</th>
+              <th class="py-3 px-2 text-[9px] font-black uppercase tracking-wider text-right w-10"  style="color: var(--text-muted);" title="Point Difference">PD</th>
+              <th class="py-3 px-2 text-[9px] font-black uppercase tracking-wider text-right w-14"  style="color: var(--text-muted);" title="Current Streak">Strk</th>
+              <th class="py-3 px-4 text-[9px] font-black uppercase tracking-wider text-right w-11"  style="color: var(--text-muted);" title="League Points">Pts</th>
             </tr>
           </thead>
 
@@ -148,20 +150,24 @@ async function handleExportImage() {
               </td>
 
               <!-- Stats Columns -->
-              <td class="py-3.5 px-2 text-right font-semibold tabular-nums" style="color: var(--text-primary);">{{ entry.wins }}</td>
-              <td class="py-3.5 px-2 text-right font-medium tabular-nums" style="color: var(--text-secondary);">{{ entry.losses }}</td>
+              <td class="py-3.5 px-2 text-right font-semibold tabular-nums" style="color: var(--text-primary);" title="Wins">{{ entry.wins }}</td>
+              <td class="py-3.5 px-2 text-right font-medium tabular-nums" style="color: var(--text-secondary);" title="Losses">{{ entry.losses }}</td>
               
-              <td class="py-3.5 px-2 text-right tabular-nums text-xs font-bold" style="color: var(--text-primary);">{{ entry.pct }}</td>
-              <td class="py-3.5 px-2 text-right tabular-nums text-xs" style="color: var(--text-muted);">{{ entry.gb }}</td>
+              <td class="py-3.5 px-2 text-right tabular-nums text-xs font-bold" style="color: var(--text-primary);" title="Winning Percentage">{{ entry.pct }}</td>
+              <td class="py-3.5 px-2 text-right tabular-nums text-xs" style="color: var(--text-muted);" title="Games Behind">{{ entry.gb }}</td>
               
-              <td class="py-3.5 px-2 text-center text-[10px] tabular-nums font-bold" style="color: var(--text-secondary);">
+              <td class="py-3.5 px-2 text-center text-[10px] tabular-nums font-bold" style="color: var(--text-secondary);" :title="`${entry.homeW} Wins, ${entry.homeL} Losses`">
                 {{ entry.homeW }}-{{ entry.homeL }}
               </td>
-              <td class="py-3.5 px-2 text-center text-[10px] tabular-nums font-bold" style="color: var(--text-secondary);">
+              <td class="py-3.5 px-2 text-center text-[10px] tabular-nums font-bold" style="color: var(--text-secondary);" :title="`${entry.roadW} Wins, ${entry.roadL} Losses`">
                 {{ entry.roadW }}-{{ entry.roadL }}
               </td>
 
+              <td class="py-3.5 px-2 text-right tabular-nums text-xs" style="color: var(--text-secondary);" title="Points For">{{ entry.ptsFor }}</td>
+              <td class="py-3.5 px-2 text-right tabular-nums text-xs" style="color: var(--text-muted);" title="Points Against">{{ entry.ptsAgainst }}</td>
+
               <td class="py-3.5 px-2 text-right font-semibold tabular-nums text-xs"
+                :title="`Point Difference: ${entry.ptsDiff}`"
                 :style="entry.ptsDiff > 0 ? 'color: #10b981;' : entry.ptsDiff < 0 ? 'color: #f43f5e;' : 'color: var(--text-secondary);'">
                 {{ entry.ptsDiff > 0 ? '+' : '' }}{{ entry.ptsDiff }}
               </td>
