@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import MatchCard from '@/components/MatchCard.vue'
 import ScoreInputModal from '@/components/ScoreInputModal.vue'
 import GlobalFilter from '@/components/GlobalFilter.vue'
