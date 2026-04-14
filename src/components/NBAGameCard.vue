@@ -29,10 +29,10 @@ const roundLabel = props.match.round?.round_number ? `Round ${props.match.round.
         <!-- Home Team -->
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
-            <div class="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center shrink-0 border"
+            <div class="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center shrink-0 border shadow-sm transition-transform group-hover:scale-105"
                  style="background-color: var(--bg-surface); border-color: var(--border);">
-              <img v-if="match.home_team?.logo_url" :src="match.home_team.logo_url" class="w-full h-full object-cover"/>
-              <span v-else class="text-[10px] font-black" style="color: var(--text-muted);">{{ teamInitial(match.home_team) }}</span>
+              <img v-if="match.home_team?.logo_url" :src="match.home_team.logo_url" class="w-8 h-8 object-contain"/>
+              <span v-else class="text-xs font-black" style="color: var(--text-muted);">{{ teamInitial(match.home_team) }}</span>
             </div>
             <span class="text-sm font-bold tracking-tight transition-colors" 
                   :style="match.status === 'Completed' && match.home_score > match.away_score ? 'color: var(--text-primary);' : 'color: var(--text-secondary);'">
@@ -53,10 +53,10 @@ const roundLabel = props.match.round?.round_number ? `Round ${props.match.round.
         <!-- Away Team -->
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
-            <div class="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center shrink-0 border"
+            <div class="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center shrink-0 border shadow-sm transition-transform group-hover:scale-105"
                  style="background-color: var(--bg-surface); border-color: var(--border);">
-              <img v-if="match.away_team?.logo_url" :src="match.away_team.logo_url" class="w-full h-full object-cover"/>
-              <span v-else class="text-[10px] font-black" style="color: var(--text-muted);">{{ teamInitial(match.away_team) }}</span>
+              <img v-if="match.away_team?.logo_url" :src="match.away_team.logo_url" class="w-8 h-8 object-contain"/>
+              <span v-else class="text-xs font-black" style="color: var(--text-muted);">{{ teamInitial(match.away_team) }}</span>
             </div>
             <span class="text-sm font-bold tracking-tight transition-colors" 
                   :style="match.status === 'Completed' && match.away_score > match.home_score ? 'color: var(--text-primary);' : 'color: var(--text-secondary);'">

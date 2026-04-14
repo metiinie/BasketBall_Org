@@ -45,17 +45,13 @@ function isActive(link) {
   >
     <!-- Logo -->
     <div class="h-16 flex items-center px-5" style="border-bottom: 1px solid var(--border);">
-      <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center shadow-md shadow-blue-600/30 mr-3 flex-shrink-0">
-        <svg viewBox="0 0 32 32" class="w-5 h-5" fill="none" stroke="white" stroke-width="1.5">
-          <circle cx="16" cy="16" r="12"/>
-          <path d="M16 4 Q21 10 21 16 Q21 22 16 28"/>
-          <path d="M16 4 Q11 10 11 16 Q11 22 16 28"/>
-          <line x1="4" y1="16" x2="28" y2="16"/>
-        </svg>
+      <div class="w-9 h-9 rounded-xl overflow-hidden flex items-center justify-center shadow-lg shadow-blue-500/10 mr-3.5 flex-shrink-0 border"
+           style="background-color: var(--bg-surface); border-color: var(--border);">
+        <img src="/logos/ebf.png" class="w-full h-full object-cover" alt="EBF League Logo"/>
       </div>
       <div>
-        <h1 class="font-black text-sm tracking-wider leading-none" style="color: var(--text-heading);">EBF LEAGUE</h1>
-        <p class="text-[9px] font-semibold tracking-widest uppercase mt-0.5" style="color: var(--text-muted);">Management Console</p>
+        <h1 class="font-black text-sm tracking-[0.15em] leading-none uppercase" style="color: var(--text-heading);">EBF LEAGUE</h1>
+        <p class="text-[9px] font-black tracking-[0.2em] uppercase mt-1 leading-none" style="color: var(--text-muted);">Basketball Ops</p>
       </div>
     </div>
 

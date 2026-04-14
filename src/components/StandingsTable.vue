@@ -154,9 +154,9 @@ async function handleExportImage() {
               <td class="sticky left-12 z-10 py-4 px-3 transition-colors shadow-[1px_0_0_0_rgba(0,0,0,0.05)]" 
                   style="background-color: var(--bg-card); border-right: 1px solid var(--border);">
                 <div class="flex items-center gap-3">
-                  <div class="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold overflow-hidden shrink-0 border bg-surface"
+                  <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-bold overflow-hidden shrink-0 border shadow-sm"
                        style="border-color: var(--border); background-color: var(--bg-surface);">
-                    <img v-if="entry.team.logo_url" :src="entry.team.logo_url" class="w-full h-full object-cover"/>
+                    <img v-if="entry.team.logo_url" :src="entry.team.logo_url" class="w-8 h-8 object-contain"/>
                     <span v-else style="color: var(--text-muted);">{{ teamInitial(entry.team) }}</span>
                   </div>
                   <div class="flex flex-col text-left">
