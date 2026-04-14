@@ -1,27 +1,18 @@
-import { createClient } from '@supabase/supabase-js'
-import dotenv from 'dotenv'
-import fs from 'fs'
+const supabaseUrl = 'https://ydamkxbjjquthugpxeia.supabase.co'
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlkYW1reGJqanF1dGh1Z3B4ZWlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwNzE4NTYsImV4cCI6MjA5MTY0Nzg1Nn0.7fkA2SKntbW5dG7MxowRDhqpJMRPbJBD3Yys5S8vzs8'
 
-// Try to read .env if it exists
-let supabaseUrl = ''
-let supabaseKey = ''
-
-const envPath = 'c:/Users/hp/Desktop/Qelem_Real/Basketball_Tracking_Magt/.env'
-if (fs.existsSync(envPath)) {
-  const env = fs.readFileSync(envPath, 'utf8')
-  supabaseUrl = env.match(/VITE_SUPABASE_URL=(.*)/)?.[1]
-  supabaseKey = env.match(/VITE_SUPABASE_ANON_KEY=(.*)/)?.[1]
-}
-
-if (!supabaseUrl || !supabaseKey) {
-    // Fallback if env check fails - try to find it in supabase.js
-    console.log("Could not find env vars, check src/lib/supabase.js")
-} else {
-    const supabase = createClient(supabaseUrl, supabaseKey)
-    async function getTeams() {
-        const { data, error } = await supabase.from('teams').select('id, name, gender')
-        if (error) console.error(error)
-        else console.log(JSON.stringify(data, null, 2))
+async function getTeams() {
+    try {
+        const response = await fetch(`${supabaseUrl}/rest/v1/teams?select=id,name,gender`, {
+            headers: {
+                'apikey': supabaseKey,
+                'Authorization': `Bearer ${supabaseKey}`
+            }
+        })
+        const data = await response.json()
+        console.log(JSON.stringify(data, null, 2))
+    } catch (e) {
+        console.error(e)
     }
-    getTeams()
 }
+getTeams()
