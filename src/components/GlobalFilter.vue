@@ -1,17 +1,18 @@
 <script setup>
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useLeagueStore } from '@/stores/league.js'
 
+const { t } = useI18n()
 const league = useLeagueStore()
 
-const leagues = [
-  { id: 'ወንድ', label: "Men's League", icon: '♂' },
-  { id: 'ሴት', label: "Women's League", icon: '♀' }
-]
+const leagues = computed(() => [
+  { id: 'ወንድ', label: t('gender.men_league'), icon: '♂' },
+  { id: 'ሴት', label: t('gender.women_league'), icon: '♀' }
+])
 
 const seasons = [
-  { id: 2025, label: '2025–26' },
-  { id: 2024, label: '2024–25' },
+  { id: 2025, label: '2018' }
 ]
 
 const currentSeasonLabel = computed(() => {
@@ -19,7 +20,7 @@ const currentSeasonLabel = computed(() => {
 })
 
 const currentLeagueLabel = computed(() => {
-  return leagues.find(l => l.id === league.selectedGender)?.label || league.selectedGender
+  return leagues.value.find(l => l.id === league.selectedGender)?.label || league.selectedGender
 })
 
 function handleLeagueChange(id) {
@@ -32,11 +33,11 @@ function handleSeasonChange(id) {
 </script>
 
 <template>
-  <div class="flex items-center gap-6 py-2">
+  <div class="flex flex-wrap items-center gap-x-6 gap-y-3 py-2">
     
     <!-- League Selector -->
     <div class="group relative">
-      <p class="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-0.5 ml-1">League</p>
+      <p class="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-0.5 ml-1">{{ t('global.league') }}</p>
       <div class="relative">
         <select 
           :value="league.selectedGender"
@@ -58,7 +59,7 @@ function handleSeasonChange(id) {
 
     <!-- Season Selector -->
     <div class="group relative">
-      <p class="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-0.5 ml-1">Season</p>
+      <p class="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-0.5 ml-1">{{ t('global.season') }}</p>
       <div class="relative">
         <select 
           :value="league.selectedSeason"

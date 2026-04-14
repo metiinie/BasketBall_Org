@@ -1,10 +1,14 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, RouterLink } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useLeagueStore } from '@/stores/league.js'
+import { getTeamName } from '@/utils/teamName.js'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import GlobalFilter from '@/components/GlobalFilter.vue'
+import TeamLogo from '@/components/TeamLogo.vue'
 
+const { t } = useI18n()
 const router = useRouter()
 const league = useLeagueStore()
 
@@ -52,7 +56,7 @@ function cancelForm() {
 }
 
 async function handleSubmit() {
-  if (!form.value.name.trim()) { formError.value = 'Team name is required.'; return }
+  if (!form.value.name.trim()) { formError.value = t('admin.team_name_req'); return }
   formLoading.value = true
   formError.value = ''
   formSuccess.value = ''
@@ -63,20 +67,20 @@ async function handleSubmit() {
         gender: form.value.gender,
         logo_url: form.value.logo_url || null,
       })
-      formSuccess.value = 'Team updated.'
+      formSuccess.value = t('admin.team_updated')
     } else {
       await league.createTeam({
         name: form.value.name.trim(),
         gender: form.value.gender,
         logo_url: form.value.logo_url || null,
       })
-      formSuccess.value = 'Team added to the league.'
+      formSuccess.value = t('admin.team_added')
     }
     cancelForm()
     await league.fetchTeams()
     setTimeout(() => formSuccess.value = '', 3000)
   } catch (e) {
-    formError.value = e.message || 'Failed to save team.'
+    formError.value = e.message || t('admin.failed_save')
   } finally {
     formLoading.value = false
   }
@@ -94,9 +98,6 @@ async function handleDelete() {
   }
 }
 
-function teamInitial(team) {
-  return team?.name?.charAt(0)?.toUpperCase() ?? '?'
-}
 </script>
 
 <template>
@@ -105,22 +106,22 @@ function teamInitial(team) {
     <!-- Header -->
     <div class="flex items-start justify-between mb-8">
       <div class="flex items-center gap-3">
-        <button @click="router.back()" class="btn-icon mt-0.5">
+        <RouterLink to="/admin" class="btn-icon mt-0.5 flex items-center justify-center">
           <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
           </svg>
-        </button>
+        </RouterLink>
         <div>
-          <h1 class="text-xl font-bold tracking-tight" style="color: var(--text-heading);">Team Manager</h1>
-          <p class="text-xs mt-0.5" style="color: var(--text-muted);">Manage league teams and divisions</p>
+          <h1 class="text-xl font-bold tracking-tight" style="color: var(--text-heading);">{{ t('admin.team_manager_title') }}</h1>
+          <p class="text-xs mt-0.5" style="color: var(--text-muted);">{{ t('admin.team_manager_desc') }}</p>
         </div>
       </div>
 
-      <button @click="startAdd" class="btn-primary gap-2 px-4 py-2">
+      <button @click="startAdd" class="btn-primary gap-2 px-4 py-2 uppercase tracking-widest text-[10px] font-black">
         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
         </svg>
-        Add Team
+        {{ t('admin.add_team') }}
       </button>
     </div>
 
@@ -133,8 +134,8 @@ function teamInitial(team) {
           </svg>
         </div>
         <div>
-          <p class="text-lg font-bold leading-none" style="color: var(--text-primary);">{{ league.teams.length }}</p>
-          <p class="text-[10px] uppercase tracking-wider mt-1" style="color: var(--text-muted);">Total Teams</p>
+          <p class="text-lg font-bold leading-none tabular-nums" style="color: var(--text-primary);">{{ league.teams.length }}</p>
+          <p class="text-[10px] uppercase tracking-wider mt-1" style="color: var(--text-muted);">{{ t('admin.total_teams') }}</p>
         </div>
       </div>
       <div class="card p-4 flex items-center gap-4">
@@ -142,8 +143,8 @@ function teamInitial(team) {
           <span class="text-base font-bold text-blue-500">♂</span>
         </div>
         <div>
-          <p class="text-lg font-bold leading-none" style="color: var(--text-primary);">{{ menCount }}</p>
-          <p class="text-[10px] uppercase tracking-wider mt-1" style="color: var(--text-muted);">Men's Division</p>
+          <p class="text-lg font-bold leading-none tabular-nums" style="color: var(--text-primary);">{{ menCount }}</p>
+          <p class="text-[10px] uppercase tracking-wider mt-1" style="color: var(--text-muted);">{{ t('admin.mens_division') }}</p>
         </div>
       </div>
       <div class="card p-4 flex items-center gap-4">
@@ -151,8 +152,8 @@ function teamInitial(team) {
           <span class="text-base font-bold text-pink-500">♀</span>
         </div>
         <div>
-          <p class="text-lg font-bold leading-none" style="color: var(--text-primary);">{{ womenCount }}</p>
-          <p class="text-[10px] uppercase tracking-wider mt-1" style="color: var(--text-muted);">Women's Division</p>
+          <p class="text-lg font-bold leading-none tabular-nums" style="color: var(--text-primary);">{{ womenCount }}</p>
+          <p class="text-[10px] uppercase tracking-wider mt-1" style="color: var(--text-muted);">{{ t('admin.womens_division') }}</p>
         </div>
       </div>
     </div>
@@ -160,9 +161,11 @@ function teamInitial(team) {
     <!-- Form Drawer -->
     <Transition name="slide-form">
       <div v-if="showForm" class="mb-8">
-        <div class="card p-6 border-blue-500/30" style="background-color: var(--bg-surface);">
+        <div class="card p-6 border-blue-500/30 shadow-2xl shadow-blue-600/10" style="background-color: var(--bg-surface);">
           <div class="flex items-center justify-between mb-6">
-            <h2 class="text-sm font-bold" style="color: var(--text-heading);">{{ editTarget ? `Edit "${editTarget.name}"` : 'Add New Team' }}</h2>
+            <h2 class="text-sm font-bold" style="color: var(--text-heading);">
+              {{ editTarget ? t('admin.edit_team', { name: getTeamName(editTarget) }) : t('admin.add_new_team') }}
+            </h2>
             <button @click="cancelForm" class="btn-icon">
               <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -172,29 +175,29 @@ function teamInitial(team) {
 
           <form @submit.prevent="handleSubmit" class="grid grid-cols-1 md:grid-cols-12 gap-5 items-end">
             <div class="md:col-span-5">
-              <label class="block text-[10px] font-bold uppercase tracking-wider mb-2" style="color: var(--text-muted);">Team Name</label>
+              <label class="block text-[10px] font-bold uppercase tracking-wider mb-2" style="color: var(--text-muted);">{{ t('admin.team_name') }}</label>
               <input v-model="form.name" type="text" required class="input-field" placeholder="Enter name…"/>
             </div>
             <div class="md:col-span-3">
-              <label class="block text-[10px] font-bold uppercase tracking-wider mb-2" style="color: var(--text-muted);">Division</label>
+              <label class="block text-[10px] font-bold uppercase tracking-wider mb-2" style="color: var(--text-muted);">{{ t('admin.division_label') }}</label>
               <div class="flex gap-2">
                 <button v-for="g in ['ወንድ', 'ሴት']" :key="g"
                   type="button"
                   @click="form.gender = g"
                   :class="['flex-1 py-1.5 rounded-lg text-xs font-bold border transition-all',
-                    form.gender === g ? 'bg-blue-600 text-white border-blue-600' : '']"
+                    form.gender === g ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-600/10' : '']"
                   :style="form.gender !== g ? 'color: var(--text-secondary); background-color: var(--bg-card); border-color: var(--border);' : ''"
-                >{{ g === 'ወንድ' ? 'Men' : 'Women' }}</button>
+                >{{ g === 'ወንድ' ? t('gender.men') : t('gender.women') }}</button>
               </div>
             </div>
             <div class="md:col-span-4">
-              <label class="block text-[10px] font-bold uppercase tracking-wider mb-2" style="color: var(--text-muted);">Logo URL</label>
+              <label class="block text-[10px] font-bold uppercase tracking-wider mb-2" style="color: var(--text-muted);">{{ t('admin.logo_url') }}</label>
               <input v-model="form.logo_url" type="url" class="input-field" placeholder="https://…"/>
             </div>
             <div class="md:col-span-12 flex justify-end gap-3 mt-2">
-              <button type="button" @click="cancelForm" class="btn-ghost">Cancel</button>
-              <button type="submit" :disabled="formLoading" class="btn-primary min-w-[100px]">
-                {{ formLoading ? 'Saving…' : (editTarget ? 'Update' : 'Add Team') }}
+              <button type="button" @click="cancelForm" class="btn-ghost">{{ t('admin.cancel') || 'Cancel' }}</button>
+              <button type="submit" :disabled="formLoading" class="btn-primary min-w-[120px] h-10 text-[11px] font-black uppercase tracking-widest">
+                {{ formLoading ? t('admin.saving') : (editTarget ? t('admin.update') || 'Update' : t('admin.add_team')) }}
               </button>
             </div>
           </form>
@@ -202,7 +205,7 @@ function teamInitial(team) {
       </div>
     </Transition>
 
-    <!-- Global Filter & Tabs -->
+    <!-- Global Filter & List -->
     <div class="card overflow-hidden">
       <div class="p-4 border-b" style="border-color: var(--border); background-color: var(--bg-surface);">
         <GlobalFilter />
@@ -212,28 +215,24 @@ function teamInitial(team) {
       <div class="divide-y" style="border-color: var(--border);">
         <div v-for="(team, index) in filteredTeams" :key="team.id"
           class="flex items-center px-6 py-4 hover:bg-slate-500/5 transition-colors group">
-          <span class="w-8 text-xs font-bold mr-4" style="color: var(--text-muted);">{{ String(index + 1).padStart(2, '0') }}</span>
+          <span class="w-8 text-xs font-bold mr-4 opacity-30 tabular-nums">{{ String(index + 1).padStart(2, '0') }}</span>
           
           <div class="flex items-center gap-4 flex-1 min-w-0">
-            <div class="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center overflow-hidden border"
-              style="background-color: var(--bg-surface); border-color: var(--border); color: var(--text-muted);">
-              <img v-if="team.logo_url" :src="team.logo_url" class="w-full h-full object-cover"/>
-              <span v-else class="text-sm font-black">{{ teamInitial(team) }}</span>
-            </div>
+            <TeamLogo :team="team" size="w-10 h-10" rounded="rounded-full" class="transition-transform group-hover:scale-110" />
             <div class="min-w-0">
-              <p class="text-sm font-bold truncate" style="color: var(--text-primary);">{{ team.name }}</p>
-              <p class="text-[10px] uppercase font-bold tracking-wider mt-0.5" style="color: var(--text-muted);">Active Member</p>
+              <p class="text-sm font-bold truncate" style="color: var(--text-primary);">{{ getTeamName(team) }}</p>
+              <p class="text-[10px] uppercase font-bold tracking-wider mt-0.5" style="color: var(--text-muted);">{{ t('admin.active_member') }}</p>
             </div>
           </div>
 
-          <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button @click="startEdit(team)" class="btn-sm btn-ghost">Edit</button>
-            <button @click="deleteTarget = team" class="btn-sm btn-danger opacity-80 hover:opacity-100">Remove</button>
+          <div class="flex gap-2 sm:opacity-0 sm:group-hover:opacity-100 transition-all transform sm:translate-x-2 sm:group-hover:translate-x-0">
+            <button @click="startEdit(team)" class="btn-sm btn-ghost px-2 sm:px-3 text-[10px] sm:text-xs">{{ t('admin.edit') || 'Edit' }}</button>
+            <button @click="deleteTarget = team" class="btn-sm btn-danger opacity-80 hover:opacity-100 px-2 sm:px-3 text-[10px] sm:text-xs">{{ t('admin.remove') }}</button>
           </div>
         </div>
 
         <div v-if="!league.loading && filteredTeams.length === 0" class="py-20 text-center">
-          <p class="text-sm font-medium" style="color: var(--text-muted);">No teams in this division yet.</p>
+          <p class="text-sm font-medium" style="color: var(--text-muted);">{{ t('admin.no_teams_div') }}</p>
         </div>
       </div>
     </div>
@@ -241,9 +240,9 @@ function teamInitial(team) {
     <!-- Confirm Dialog -->
     <ConfirmDialog
       v-if="deleteTarget"
-      title="Remove Team?"
-      :message="`Are you sure you want to remove '${deleteTarget.name}'? This action is permanent.`"
-      confirm-label="Remove"
+      :title="t('admin.remove_team_title')"
+      :message="t('admin.remove_team_msg', { name: getTeamName(deleteTarget) })"
+      :confirm-label="t('admin.remove').toUpperCase()"
       :danger="true"
       :loading="deleteLoading"
       @confirm="handleDelete"

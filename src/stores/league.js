@@ -90,6 +90,18 @@ export const useLeagueStore = defineStore('league', () => {
     return data
   }
 
+  async function createRound(seasonYear, roundNumber) {
+    // Check if there's an active round first. We might want to deactivate it or just let the user know.
+    const { data, error: err } = await supabase.from('rounds').insert({
+      season_year: seasonYear,
+      round_number: roundNumber,
+      status: 'Pending' // Start as pending, user can activate it
+    }).select().single()
+    if (err) throw err
+    rounds.value.push(data)
+    return data
+  }
+
   // ─── Matches ─────────────────────────────────────────────────────────────
 
   async function createMatch(payload) {
@@ -104,11 +116,33 @@ export const useLeagueStore = defineStore('league', () => {
       .single()
     if (err) throw err
     // Only add to local state if the scheduled match is in the currently viewed round.
-    // If we're displaying this round, push it to our array instantly.
     if (matches.value.length > 0 && matches.value[0].round_id === data.round_id) {
        matches.value.push(data)
     }
     return data
+  }
+
+  async function updateMatch(id, payload) {
+    const { data, error: err } = await supabase
+      .from('matches')
+      .update(payload)
+      .eq('id', id)
+      .select(`
+        *,
+        home_team:teams!home_team_id(id, name, gender, logo_url),
+        away_team:teams!away_team_id(id, name, gender, logo_url)
+      `)
+      .single()
+    if (err) throw err
+    const idx = matches.value.findIndex(m => m.id === id)
+    if (idx !== -1) matches.value[idx] = data
+    return data
+  }
+
+  async function deleteMatch(id) {
+    const { error: err } = await supabase.from('matches').delete().eq('id', id)
+    if (err) throw err
+    matches.value = matches.value.filter(m => m.id !== id)
   }
 
   async function fetchMatches(roundId) {
@@ -140,10 +174,21 @@ export const useLeagueStore = defineStore('league', () => {
     matchSubscription = supabase
       .channel(`matches:round:${roundId}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'matches', filter: `round_id=eq.${roundId}` },
-        (payload) => {
+        async (payload) => {
           const { eventType, new: newRecord, old: oldRecord } = payload
           if (eventType === 'INSERT') {
-            matches.value.push(newRecord)
+            // Re-fetch the full match with team joins — real-time payloads don't include relations
+            const { data: fullMatch } = await supabase
+              .from('matches')
+              .select(`
+                *,
+                home_team:teams!home_team_id(id, name, gender, logo_url),
+                away_team:teams!away_team_id(id, name, gender, logo_url),
+                round:rounds(id, round_number, season_year)
+              `)
+              .eq('id', newRecord.id)
+              .single()
+            if (fullMatch) matches.value.push(fullMatch)
           } else if (eventType === 'UPDATE') {
             const idx = matches.value.findIndex(m => m.id === newRecord.id)
             if (idx !== -1) matches.value[idx] = { ...matches.value[idx], ...newRecord }
@@ -161,11 +206,16 @@ export const useLeagueStore = defineStore('league', () => {
     }
   }
 
-  async function updateMatchScore(matchId, homeScore, awayScore) {
+  async function updateMatchScore(matchId, homeScore, awayScore, isOT = false) {
     const status = (homeScore !== null && awayScore !== null) ? 'Completed' : 'Scheduled'
     const { data, error: err } = await supabase
       .from('matches')
-      .update({ home_score: homeScore, away_score: awayScore, status })
+      .update({ 
+        home_score: homeScore, 
+        away_score: awayScore, 
+        status,
+        is_ot: isOT // We'll pass this; if it doesn't exist, Supabase will safely ignore it OR error (which we want to know)
+      })
       .eq('id', matchId)
       .select(`
         *,
@@ -202,11 +252,16 @@ export const useLeagueStore = defineStore('league', () => {
   // ─── Round Finalisation ──────────────────────────────────────────────────
 
   async function finalizeRound(roundId) {
-    // 1. Compute final standings snapshot
+    // 1. Compute final standings snapshot — save extended stats for global standings display
     const finalStandings = standings.value.map(s => ({
       team: { id: s.team.id, name: s.team.name, gender: s.team.gender, logo_url: s.team.logo_url },
-      rank: s.rank, played: s.played, wins: s.wins, losses: s.losses,
-      ptsFor: s.ptsFor, ptsAgainst: s.ptsAgainst, ptsDiff: s.ptsDiff, leaguePts: s.leaguePts,
+      rank: s.rank,
+      played: s.played, wins: s.wins, losses: s.losses,
+      homeW: s.homeW, homeL: s.homeL,
+      roadW: s.roadW, roadL: s.roadL,
+      ptsFor: s.ptsFor, ptsAgainst: s.ptsAgainst,
+      ptsDiff: s.ptsDiff, leaguePts: s.leaguePts,
+      pct: s.pct, gb: s.gb, forfeits: s.forfeits,
     }))
 
     // 2. Upsert snapshot
@@ -231,8 +286,14 @@ export const useLeagueStore = defineStore('league', () => {
       }
     }
 
-    // 5. Refresh rounds state
-    await fetchRounds()
+    // 5. Refresh rounds state — pass the season year to avoid loading all seasons
+    const seasonYear = current?.season_year || selectedSeason.value
+    await fetchRounds(seasonYear)
+    matches.value = []
+  }
+
+  /** Clear matches from local state (use instead of direct mutation) */
+  function clearMatches() {
     matches.value = []
   }
 
@@ -240,9 +301,10 @@ export const useLeagueStore = defineStore('league', () => {
     teams, rounds, activeRound, matches, standings, loading, error,
     selectedGender, selectedSeason,
     fetchTeams, createTeam, updateTeam, deleteTeam,
-    fetchRounds,
-    fetchMatches, createMatch, subscribeToMatches, unsubscribeFromMatches,
+    fetchRounds, createRound,
+    fetchMatches, createMatch, updateMatch, deleteMatch,
+    subscribeToMatches, unsubscribeFromMatches,
     updateMatchScore, markMatchForfeit,
-    finalizeRound,
+    finalizeRound, updateRound, clearMatches
   }
 })

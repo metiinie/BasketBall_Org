@@ -1,10 +1,14 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
+import { RouterLink } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+import { getSeasonLabel } from '@/utils/dateFormatter.js'
 import MatchCard from '@/components/MatchCard.vue'
 import ScoreInputModal from '@/components/ScoreInputModal.vue'
 import GlobalFilter from '@/components/GlobalFilter.vue'
 import { useLeagueStore } from '@/stores/league.js'
 
+const { t } = useI18n()
 const league = useLeagueStore()
 const selectedMatch = ref(null)
 const saveError = ref('')
@@ -20,7 +24,7 @@ async function initScores() {
     league.subscribeToMatches(league.activeRound.id)
   } else {
     await league.fetchTeams(league.selectedGender)
-    league.matches = []
+    league.clearMatches()
   }
 }
 
@@ -39,11 +43,11 @@ async function handleSaveScore({ matchId, homeScore, awayScore }) {
   saveSuccess.value = ''
   try {
     await league.updateMatchScore(matchId, homeScore, awayScore)
-    saveSuccess.value = 'Saved.'
+    saveSuccess.value = t('admin.saved')
     selectedMatch.value = null
     setTimeout(() => { saveSuccess.value = '' }, 2000)
   } catch (e) {
-    saveError.value = e.message || 'Error.'
+    saveError.value = e.message || t('admin.failed_save')
   }
 }
 </script>
@@ -54,13 +58,13 @@ async function handleSaveScore({ matchId, homeScore, awayScore }) {
     <!-- Compact Header -->
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-lg font-bold tracking-tight" style="color: var(--text-heading);">Score Entry</h1>
+        <h1 class="text-lg font-bold tracking-tight" style="color: var(--text-heading);">{{ t('admin.score_entry_title') }}</h1>
         <div class="mt-1">
           <GlobalFilter />
         </div>
         <p class="text-[10px] font-bold uppercase tracking-widest mt-2" style="color: var(--text-muted);">
           <template v-if="league.activeRound">
-            Round {{ league.activeRound.round_number }} • {{ league.selectedSeason === 2025 ? '2025–26' : league.selectedSeason }}
+            {{ t('matches.round', { num: league.activeRound.round_number }) }} • {{ getSeasonLabel(league.selectedSeason) }}
           </template>
         </p>
       </div>
@@ -68,15 +72,15 @@ async function handleSaveScore({ matchId, homeScore, awayScore }) {
       <div class="flex items-center gap-2">
         <div v-if="league.matches.length > 0" class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg border bg-slate-500/5 transition-all" style="border-color: var(--border);">
           <div class="w-1.5 h-1.5 rounded-full bg-blue-600"></div>
-          <span class="text-[10px] font-bold uppercase" style="color: var(--text-secondary);">{{ progressPct }}% Done</span>
+          <span class="text-[10px] font-bold uppercase tabular-nums" style="color: var(--text-secondary);">{{ t('admin.done_progress', { pct: progressPct }) }}</span>
         </div>
         <RouterLink to="/admin" class="btn-ghost flex items-center h-8 px-3 text-[10px] font-bold uppercase tracking-widest">
-          Dashboard
+          {{ t('nav.dashboard') }}
         </RouterLink>
       </div>
     </div>
 
-    <!-- Progress Border Accent (Instead of a huge card) -->
+    <!-- Progress Border Accent -->
     <div v-if="league.matches.length > 0" class="h-1 rounded-full overflow-hidden" style="background-color: var(--bg-surface);">
       <div
         :style="`width: ${progressPct}%`"
@@ -99,8 +103,8 @@ async function handleSaveScore({ matchId, homeScore, awayScore }) {
     <!-- Main List -->
     <div class="space-y-2">
       <div v-if="!league.activeRound && !league.loading" class="card p-10 flex flex-col items-center text-center gap-4">
-        <p class="text-xs font-bold" style="color: var(--text-secondary);">No Active Round Session</p>
-        <RouterLink to="/admin/rounds" class="btn-primary text-xs h-8 px-6">Activate Round</RouterLink>
+        <p class="text-xs font-bold" style="color: var(--text-secondary);">{{ t('admin.no_active_round_session') }}</p>
+        <RouterLink to="/admin/rounds" class="btn-primary text-xs h-8 px-6 uppercase tracking-widest font-black inline-flex items-center justify-center">{{ t('admin.activate_round') }}</RouterLink>
       </div>
 
       <div v-else-if="league.loading" class="space-y-2">
@@ -109,7 +113,7 @@ async function handleSaveScore({ matchId, homeScore, awayScore }) {
 
       <div v-else class="space-y-1.5">
         <div v-if="league.matches.length === 0" class="card p-10 text-center text-[10px] font-bold uppercase" style="color: var(--text-muted);">
-          No fixtures in this round.
+          {{ t('admin.no_fixtures_round') }}
         </div>
 
         <MatchCard

@@ -1,11 +1,14 @@
 <script setup>
 import { ref, watch, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { getSeasonLabel } from '@/utils/dateFormatter.js'
 import StandingsTable from '@/components/StandingsTable.vue'
 import RoundSelector from '@/components/RoundSelector.vue'
 import GlobalFilter from '@/components/GlobalFilter.vue'
 import { useLeagueStore } from '@/stores/league.js'
 import { useGlobalStore } from '@/stores/global.js'
 
+const { t } = useI18n()
 const league = useLeagueStore()
 const global = useGlobalStore()
 
@@ -46,11 +49,11 @@ watch([selectedRound, () => league.selectedGender], () => {
 
 const currentRound = () => league.rounds.find(r => r.id === selectedRound.value)
 const roundLabel = () => {
-  if (selectedRound.value === 'global') return 'Global Season'
+  if (selectedRound.value === 'global') return t('standings.global_season')
   const r = currentRound()
-  return r ? `Round ${r.round_number}` : ''
+  return r ? t('matches.round', { num: r.round_number }) : ''
 }
-const seasonYearLabel = () => league.selectedSeason === 2025 ? '2025–26' : league.selectedSeason
+const seasonYearLabel = () => getSeasonLabel(league.selectedSeason)
 </script>
 
 <template>
@@ -69,13 +72,15 @@ const seasonYearLabel = () => league.selectedSeason === 2025 ? '2025–26' : lea
             </svg>
           </div>
           <div>
-            <h1 class="text-xl font-black tracking-tight leading-none mb-1" style="color: var(--text-heading);">EBF League Standings</h1>
-            <p class="text-xs font-medium capitalize tracking-wide" style="color: var(--text-muted);">Ethiopian Basketball Federation</p>
+            <h1 class="text-xl font-black tracking-tight leading-none mb-1" style="color: var(--text-heading);">{{ t('standings.ebf_standings') }}</h1>
+            <p class="text-xs font-medium capitalize tracking-wide" style="color: var(--text-muted);">{{ t('standings.ebf_full') }}</p>
           </div>
         </div>
         <div v-if="league.activeRound" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30">
           <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span class="text-xs font-bold tracking-wide text-emerald-500 uppercase">Live · Round {{ league.activeRound.round_number }}</span>
+          <span class="text-xs font-bold tracking-wide text-emerald-500 uppercase tabular-nums">
+            {{ t('standings.live_round', { num: league.activeRound.round_number }) }}
+          </span>
         </div>
       </div>
     </div>
@@ -85,7 +90,7 @@ const seasonYearLabel = () => league.selectedSeason === 2025 ? '2025–26' : lea
 
     <!-- Round Selector -->
     <div class="space-y-1.5 pt-2">
-      <h3 class="text-xs font-bold uppercase tracking-wider" style="color: var(--text-muted);">Select Round</h3>
+      <h3 class="text-xs font-bold uppercase tracking-wider" style="color: var(--text-muted);">{{ t('standings.select_round') }}</h3>
       <RoundSelector
         v-model="selectedRound"
         :rounds="league.rounds"
@@ -112,9 +117,9 @@ const seasonYearLabel = () => league.selectedSeason === 2025 ? '2025–26' : lea
         </svg>
       </div>
       <div class="text-xs space-y-1" style="color: var(--text-muted);">
-        <p class="font-bold uppercase tracking-wider text-[10px] mb-1" style="color: var(--text-secondary);">FIBA Tiebreaker Rules Applied</p>
-        <p>1. Head-to-Head Result &nbsp;→&nbsp; 2. H2H Point Difference &nbsp;→&nbsp; 3. Overall Point Difference.</p>
-        <p>Win = <span class="text-blue-500 font-bold">2 pts</span> &nbsp;|&nbsp; Loss = <span class="font-bold" style="color: var(--text-secondary);">1 pt</span> &nbsp;|&nbsp; Forfeit = <span class="text-red-500 font-bold">0 pts</span></p>
+        <p class="font-bold uppercase tracking-wider text-[10px] mb-1" style="color: var(--text-secondary);">{{ t('standings.fiba_title') }}</p>
+        <p v-html="t('standings.fiba_rule_1')"></p>
+        <p v-html="t('standings.fiba_rule_points', { win: 2, loss: 1, forfeit: 0 })"></p>
       </div>
     </div>
   </div>

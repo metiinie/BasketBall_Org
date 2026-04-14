@@ -1,10 +1,13 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import NBAGameCard from '@/components/NBAGameCard.vue'
 import RoundSelector from '@/components/RoundSelector.vue'
 import GlobalFilter from '@/components/GlobalFilter.vue'
 import { useLeagueStore } from '@/stores/league.js'
+import { formatEthiopian } from '@/utils/dateFormatter'
 
+const { t } = useI18n()
 const league = useLeagueStore()
 const selectedRound = ref(null)
 const filter = ref('All')
@@ -27,27 +30,38 @@ const matchesByDate = computed(() => {
                filter.value === 'Today' ? league.matches.filter(m => {
                  const d = new Date(m.match_date).toDateString()
                  return d === new Date().toDateString()
-               }) : league.matches.filter(m => m.status === filter.value)
+               }) : league.matches.filter(m => {
+                 if (filter.value === 'Scheduled') return m.status === 'Scheduled'
+                 if (filter.value === 'Completed') return m.status === 'Completed' || m.status === 'Forfeited'
+                 return true
+               })
 
   const groups = {}
   list.forEach(m => {
-    const d = new Date(m.match_date)
-    const dateStr = d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
-    if (!groups[dateStr]) groups[dateStr] = []
-    groups[dateStr].push(m)
+    // Group by ISO date to avoid TZ issues
+    const day = new Date(m.match_date).toISOString().split('T')[0]
+    if (!groups[day]) groups[day] = []
+    groups[day].push(m)
   })
   
-  return Object.entries(groups).map(([date, matches]) => ({ date, matches }))
-    .sort((a, b) => new Date(a.date) - new Date(b.date))
+  return Object.entries(groups).map(([date, matches]) => ({ 
+    date, 
+    localized: formatEthiopian(date),
+    matches 
+  })).sort((a, b) => new Date(a.date) - new Date(b.date))
 })
 
 const allDates = computed(() => {
-  const dates = league.matches.map(m => new Date(m.match_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }))
-  return [...new Set(dates)].sort((a, b) => new Date(a) - new Date(b))
+  const dates = league.matches.map(m => new Date(m.match_date).toISOString().split('T')[0])
+  const unique = [...new Set(dates)].sort((a, b) => new Date(a) - new Date(b))
+  return unique.map(d => ({
+    raw: d,
+    label: formatEthiopian(d)
+  }))
 })
 
-const scrollToDate = (dateStr) => {
-  const el = document.getElementById(`date-${dateStr}`)
+const scrollToDate = (rawDate) => {
+  const el = document.getElementById(`date-${rawDate}`)
   if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 </script>
@@ -58,7 +72,7 @@ const scrollToDate = (dateStr) => {
     <!-- Header Area -->
     <div class="flex flex-col md:flex-row items-start md:items-end justify-between gap-6">
       <div class="space-y-1">
-        <h1 class="text-2xl font-black tracking-tight" style="color: var(--text-heading);">Match Scoreboard</h1>
+        <h1 class="text-2xl font-black tracking-tight" style="color: var(--text-heading);">{{ t('matches.title') }}</h1>
         <p class="text-xs font-bold uppercase tracking-widest" style="color: var(--text-muted);">FIBA Standard Timing & Scoring</p>
       </div>
       <div class="w-full md:w-auto">
@@ -87,7 +101,9 @@ const scrollToDate = (dateStr) => {
             :class="['px-5 py-2 rounded-full text-[11px] font-black uppercase tracking-widest border transition-all',
               filter === f ? 'bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-600/20' : '']"
             :style="filter !== f ? 'color: var(--text-secondary); background-color: var(--bg-card); border-color: var(--border);' : ''"
-          >{{ f }}</button>
+          >
+            {{ t(`matches.${f.toLowerCase()}`) }}
+          </button>
         </div>
       </div>
 
@@ -95,13 +111,13 @@ const scrollToDate = (dateStr) => {
       <div class="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
         <button 
           v-for="date in allDates" 
-          :key="date"
-          @click="scrollToDate(date)"
+          :key="date.raw"
+          @click="scrollToDate(date.raw)"
           class="flex-shrink-0 px-6 py-3 rounded-xl border transition-all text-center min-w-[100px] hover:shadow-md active:scale-95"
           style="background-color: var(--bg-card); border-color: var(--border);"
         >
-          <p class="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-0.5">DATE</p>
-          <p class="text-sm font-black" style="color: var(--text-primary);">{{ date }}</p>
+          <p class="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-0.5">{{ t('matches.date_label') }}</p>
+          <p class="text-sm font-black" style="color: var(--text-primary);">{{ date.label }}</p>
         </button>
       </div>
     </div>
@@ -116,12 +132,12 @@ const scrollToDate = (dateStr) => {
     <!-- Matches Grouped by Date -->
     <div v-else-if="matchesByDate.length > 0" class="space-y-10">
       <div v-for="group in matchesByDate" :key="group.date" 
-           :id="`date-${new Date(group.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}`"
+           :id="`date-${group.date}`"
            class="space-y-4 scroll-mt-24">
         <!-- Date Header -->
         <h2 class="text-[11px] font-black uppercase tracking-[0.2em] px-1 py-1 border-b" 
             style="color: var(--text-muted); border-color: var(--border);">
-          {{ group.date }}
+          {{ group.localized }}
         </h2>
         
         <!-- Game Grid -->
@@ -137,8 +153,8 @@ const scrollToDate = (dateStr) => {
         <svg class="w-8 h-8 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
       </div>
       <div>
-        <p class="font-bold text-lg" style="color: var(--text-secondary);">No games scheduled</p>
-        <p class="text-sm" style="color: var(--text-muted);">Check back later for updates or select a different round.</p>
+        <p class="font-bold text-lg" style="color: var(--text-secondary);">{{ t('matches.no_games') }}</p>
+        <p class="text-sm" style="color: var(--text-muted);">{{ t('matches.check_back') }}</p>
       </div>
     </div>
 

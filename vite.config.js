@@ -10,7 +10,8 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg'],
+      injectRegister: 'script',
+      includeAssets: ['favicon.svg', 'logos/ebf.png'],
       manifest: {
         name: 'EBF League Management System',
         short_name: 'EBF League',
@@ -18,11 +19,34 @@ export default defineConfig({
         theme_color: '#0d1b2a',
         background_color: '#0d1b2a',
         display: 'standalone',
+        orientation: 'portrait',
         scope: '/',
         start_url: '/',
         icons: [
-          { src: 'favicon.svg', sizes: 'any', type: 'image/svg+xml' }
+          {
+            src: '/logos/ebf.png',
+            sizes: '192x192',
+            type: 'image/png'
+          },
+          {
+            src: '/logos/ebf.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any maskable'
+          }
         ],
+        shortcuts: [
+          {
+            name: 'Standings',
+            url: '/',
+            icons: [{ src: '/logos/ebf.png', sizes: '192x192' }]
+          },
+          {
+            name: 'Matches',
+            url: '/matches',
+            icons: [{ src: '/logos/ebf.png', sizes: '192x192' }]
+          }
+        ]
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],

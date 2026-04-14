@@ -1,9 +1,15 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, RouterLink } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+import { getSeasonLabel } from '@/utils/dateFormatter.js'
 import { useLeagueStore } from '@/stores/league.js'
+import { getTeamName } from '@/utils/teamName.js'
+import { formatEthiopian } from '@/utils/dateFormatter.js'
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import GlobalFilter from '@/components/GlobalFilter.vue'
 
+const { t } = useI18n()
 const router = useRouter()
 const league = useLeagueStore()
 
@@ -18,13 +24,17 @@ const submitting = ref(false)
 const errorMsg = ref('')
 const successMsg = ref('')
 
+const editingMatch = ref(null)
+const showConfirmDelete = ref(false)
+const matchToDelete = ref(null)
+
 async function initScheduler() {
   await league.fetchRounds(league.selectedSeason)
   await league.fetchTeams() // Fetch all teams once, computed will filter by gender
   if (league.activeRound) {
     await league.fetchMatches(league.activeRound.id)
   } else {
-    league.matches = []
+    league.clearMatches()
   }
 }
 
@@ -44,7 +54,8 @@ const filteredTeams = computed(() =>
 const recentSchedules = computed(() =>
   league.matches
     .filter(m => m.status === 'Pending' || m.status === 'Scheduled' || m.status === 'Completed')
-    .slice(0, 6)
+    .sort((a,b) => new Date(b.match_date) - new Date(a.match_date))
+    .slice(0, 8)
 )
 
 async function scheduleMatch() {
@@ -52,43 +63,83 @@ async function scheduleMatch() {
   successMsg.value = ''
 
   if (!league.activeRound) {
-    errorMsg.value = 'No active round found. Activate a round first.'
+    errorMsg.value = t('admin.no_active_round_warn')
     return
   }
   if (!matchData.value.home_team_id || !matchData.value.away_team_id) {
-    errorMsg.value = 'Please select both Home and Away teams.'
+    errorMsg.value = t('admin.select_both_teams')
     return
   }
   if (matchData.value.home_team_id === matchData.value.away_team_id) {
-    errorMsg.value = 'Home and Away teams must be different.'
+    errorMsg.value = t('admin.diff_teams_err')
     return
   }
   if (!matchData.value.match_date) {
-    errorMsg.value = 'Please specify a match date and time.'
+    errorMsg.value = t('admin.specify_date_err')
     return
   }
 
   submitting.value = true
   try {
-    await league.createMatch({
+    const payload = {
       round_id: league.activeRound.id,
       home_team_id: matchData.value.home_team_id,
       away_team_id: matchData.value.away_team_id,
       match_date: new Date(matchData.value.match_date).toISOString(),
       venue: matchData.value.venue,
       status: 'Scheduled'
-    })
-    successMsg.value = 'Match scheduled successfully!'
-    matchData.value.home_team_id = ''
-    matchData.value.away_team_id = ''
-    matchData.value.match_date = ''
-    matchData.value.venue = ''
+    }
+
+    if (editingMatch.value) {
+      await league.updateMatch(editingMatch.value.id, payload)
+      successMsg.value = t('admin.match_updated_success') || 'Match updated.'
+    } else {
+      await league.createMatch(payload)
+      successMsg.value = t('admin.match_scheduled_success')
+    }
+
+    resetForm()
     setTimeout(() => successMsg.value = '', 4000)
   } catch (err) {
-    errorMsg.value = err.message || 'Failed to schedule match.'
+    errorMsg.value = err.message || t('admin.failed_schedule')
   } finally {
     submitting.value = false
   }
+}
+
+function resetForm() {
+    matchData.value = { home_team_id: '', away_team_id: '', match_date: '', venue: '' }
+    editingMatch.value = null
+}
+
+function editMatch(match) {
+    editingMatch.value = match
+    matchData.value = {
+        home_team_id: match.home_team_id,
+        away_team_id: match.away_team_id,
+        match_date: match.match_date ? new Date(match.match_date).toISOString().slice(0, 16) : '',
+        venue: match.venue || ''
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+function confirmDelete(match) {
+    matchToDelete.value = match
+    showConfirmDelete.value = true
+}
+
+async function handleDelete() {
+    if (!matchToDelete.value) return
+    submitting.value = true
+    try {
+        await league.deleteMatch(matchToDelete.value.id)
+        showConfirmDelete.value = false
+        matchToDelete.value = null
+    } catch (err) {
+        errorMsg.value = err.message
+    } finally {
+        submitting.value = false
+    }
 }
 
 const statusBadge = (status) => {
@@ -99,6 +150,8 @@ const statusBadge = (status) => {
   }
   return map[status] ?? 'badge-pending'
 }
+
+const formatMatchDate = (d) => d ? formatEthiopian(d) : '—'
 </script>
 
 <template>
@@ -106,14 +159,14 @@ const statusBadge = (status) => {
 
     <!-- Header -->
     <div class="flex items-center gap-3">
-      <button @click="router.back()" class="btn-icon">
+      <RouterLink to="/admin" class="btn-icon flex items-center justify-center">
         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
         </svg>
-      </button>
+      </RouterLink>
       <div>
-        <h1 class="text-xl font-bold tracking-tight" style="color: var(--text-heading);">Match Scheduler</h1>
-        <p class="text-xs mt-0.5" style="color: var(--text-muted);">Create and publish upcoming league fixtures</p>
+        <h1 class="text-xl font-bold tracking-tight" style="color: var(--text-heading);">{{ t('admin.scheduler_title') }}</h1>
+        <p class="text-xs mt-0.5" style="color: var(--text-muted);">{{ t('admin.scheduler_desc') }}</p>
       </div>
     </div>
 
@@ -122,15 +175,15 @@ const statusBadge = (status) => {
       <div class="flex items-center gap-2.5">
         <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse flex-shrink-0"></div>
         <div>
-          <p class="text-xs font-bold" style="color: var(--text-primary);">Round {{ league.activeRound.round_number }} — Season {{ league.activeRound.season_year }}</p>
-          <p class="text-[10px] mt-0.5" style="color: var(--text-muted);">All new fixtures will be assigned to this round</p>
+          <p class="text-xs font-bold" style="color: var(--text-primary);">{{ t('admin.active_round_banner', { num: league.activeRound.round_number, year: getSeasonLabel(league.activeRound.season_year) }) }}</p>
+          <p class="text-[10px] mt-0.5" style="color: var(--text-muted);">{{ t('admin.assigned_round_desc') }}</p>
         </div>
       </div>
-      <span class="badge-completed px-2.5 py-1 text-[10px] uppercase tracking-widest font-bold">Active</span>
+      <span class="badge-completed px-2.5 py-1 text-[10px] uppercase tracking-widest font-bold">{{ t('global.active') || 'Active' }}</span>
     </div>
 
     <div v-else class="card px-5 py-3.5 border-amber-500/30 bg-amber-500/10">
-      <p class="text-xs font-semibold text-amber-500">⚠ No active round found. Activate a round first.</p>
+      <p class="text-xs font-semibold text-amber-500">⚠ {{ t('admin.no_active_round_warn') }}</p>
     </div>
 
     <!-- Main Grid -->
@@ -138,11 +191,13 @@ const statusBadge = (status) => {
 
       <!-- Form Card -->
       <div class="lg:col-span-8">
-        <form @submit.prevent="scheduleMatch" class="card p-6 space-y-5">
+        <form @submit.prevent="scheduleMatch" class="card p-6 space-y-5 shadow-2xl shadow-blue-600/5">
 
           <div class="pb-4" style="border-bottom: 1px solid var(--border);">
-            <h2 class="text-sm font-bold" style="color: var(--text-heading);">New Fixture</h2>
-            <p class="text-xs mt-0.5" style="color: var(--text-muted);">Fill in all required fields to publish the match</p>
+            <h2 class="text-sm font-bold" style="color: var(--text-heading);">
+                {{ editingMatch ? (t('admin.edit_match') || 'Edit Fixture') : t('admin.new_fixture') }}
+            </h2>
+            <p class="text-xs mt-0.5" style="color: var(--text-muted);">{{ t('admin.fixture_desc') }}</p>
           </div>
 
           <!-- Global Filter (Gender / Season) -->
@@ -153,20 +208,20 @@ const statusBadge = (status) => {
           <!-- Teams Selection -->
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label class="block text-xs font-semibold mb-1.5" style="color: var(--text-secondary);">Home Team</label>
+              <label class="block text-xs font-semibold mb-1.5" style="color: var(--text-secondary);">{{ t('admin.home_team') }}</label>
               <select v-model="matchData.home_team_id" required class="input-field">
-                <option value="" disabled>Select home team</option>
+                <option value="" disabled>{{ t('admin.select_home') }}</option>
                 <option v-for="team in filteredTeams" :key="team.id" :value="team.id" :disabled="team.id === matchData.away_team_id">
-                  {{ team.name }}
+                  {{ getTeamName(team) }}
                 </option>
               </select>
             </div>
             <div>
-              <label class="block text-xs font-semibold mb-1.5" style="color: var(--text-secondary);">Away Team</label>
+              <label class="block text-xs font-semibold mb-1.5" style="color: var(--text-secondary);">{{ t('admin.away_team') }}</label>
               <select v-model="matchData.away_team_id" required class="input-field">
-                <option value="" disabled>Select away team</option>
+                <option value="" disabled>{{ t('admin.select_away') }}</option>
                 <option v-for="team in filteredTeams" :key="team.id" :value="team.id" :disabled="team.id === matchData.home_team_id">
-                  {{ team.name }}
+                  {{ getTeamName(team) }}
                 </option>
               </select>
             </div>
@@ -174,26 +229,31 @@ const statusBadge = (status) => {
 
           <!-- VS Badge Preview -->
           <div v-if="matchData.home_team_id && matchData.away_team_id"
-            class="flex items-center gap-3 px-4 py-3 rounded-lg border"
+            class="flex flex-col sm:flex-row items-center gap-3 px-4 py-3 rounded-lg border text-center"
             style="background-color: var(--bg-surface); border-color: var(--border);">
-            <span class="text-xs font-bold flex-1 text-right" style="color: var(--text-primary);">
-              {{ filteredTeams.find(t => t.id === matchData.home_team_id)?.name }}
-            </span>
+            <div class="flex-1 min-w-0 w-full sm:text-right">
+              <span class="text-xs font-bold block truncate" style="color: var(--text-primary);">
+                {{ getTeamName(filteredTeams.find(t => t.id === matchData.home_team_id)) }}
+              </span>
+            </div>
             <span class="px-3 py-1 rounded-full text-[9px] font-black tracking-widest bg-blue-600/20 text-blue-500 border border-blue-600/30">VS</span>
-            <span class="text-xs font-bold flex-1" style="color: var(--text-primary);">
-              {{ filteredTeams.find(t => t.id === matchData.away_team_id)?.name }}
-            </span>
+            <div class="flex-1 min-w-0 w-full sm:text-left">
+              <span class="text-xs font-bold block truncate" style="color: var(--text-primary);">
+                {{ getTeamName(filteredTeams.find(t => t.id === matchData.away_team_id)) }}
+              </span>
+            </div>
           </div>
 
           <!-- Time & Venue -->
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label class="block text-xs font-semibold mb-1.5" style="color: var(--text-secondary);">Date & Time</label>
+              <label class="block text-xs font-semibold mb-1.5" style="color: var(--text-secondary);">{{ t('admin.date_time') }}</label>
               <input type="datetime-local" v-model="matchData.match_date" required class="input-field"/>
             </div>
             <div>
-              <label class="block text-xs font-semibold mb-1.5" style="color: var(--text-secondary);">Venue <span class="font-normal" style="color: var(--text-muted);">(optional)</span></label>
+              <label class="block text-xs font-semibold mb-1.5" style="color: var(--text-secondary);">{{ t('admin.venue') }} <span class="font-normal" style="color: var(--text-muted);">(optional)</span></label>
               <input type="text" v-model="matchData.venue" placeholder="e.g. Haile Court" class="input-field"/>
+
             </div>
           </div>
 
@@ -208,10 +268,13 @@ const statusBadge = (status) => {
 
           <!-- Action Row -->
           <div class="flex items-center justify-between pt-4" style="border-top: 1px solid var(--border);">
-            <p class="text-[10px]" style="color: var(--text-muted);">Assigned to Round {{ league.activeRound?.round_number }}</p>
-            <button type="submit" :disabled="submitting || !league.activeRound" class="btn-primary min-w-[140px]">
-              <span v-if="submitting">Scheduling…</span>
-              <span v-else>Schedule Match</span>
+            <div class="flex items-center gap-3">
+                <p class="text-[10px] font-bold" style="color: var(--text-muted);">{{ t('matches.round', { num: league.activeRound?.round_number }) }}</p>
+                <button v-if="editingMatch" type="button" @click="resetForm" class="text-[10px] font-bold text-red-500 uppercase tracking-widest">{{ t('admin.cancel') }}</button>
+            </div>
+            <button type="submit" :disabled="submitting || !league.activeRound" class="btn-primary min-w-[160px] h-10 text-[11px] font-black uppercase tracking-widest shadow-lg shadow-blue-600/20">
+              <span v-if="submitting">{{ editingMatch ? (t('admin.updating') || 'Updating…') : t('admin.scheduling') }}</span>
+              <span v-else>{{ editingMatch ? (t('admin.update_match') || 'Save Changes') : t('admin.schedule_match_btn') }}</span>
             </button>
           </div>
 
@@ -225,21 +288,29 @@ const statusBadge = (status) => {
             <svg class="w-3.5 h-3.5" style="color: var(--text-muted);" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
             </svg>
-            <p class="text-xs font-bold uppercase tracking-widest" style="color: var(--text-secondary);">Recent Fixtures</p>
+            <p class="text-xs font-bold uppercase tracking-widest" style="color: var(--text-secondary);">{{ t('admin.recent_fixtures') }}</p>
           </div>
 
           <div class="flex-1 divide-y" style="border-color: var(--border);">
             <div v-for="match in recentSchedules" :key="match.id" class="px-5 py-3.5 hover:bg-slate-500/5 transition-colors">
               <div class="flex items-center justify-between mb-1.5">
-                <span class="text-[9px] font-bold px-1.5 py-0.5 rounded border uppercase" :class="statusBadge(match.status)">
-                  {{ match.status }}
+                <span class="text-[9px] font-black px-1.5 py-0.5 rounded border uppercase tabular-nums" :class="statusBadge(match.status)">
+                  {{ match.status === 'Scheduled' ? t('matches.scheduled') : (match.status === 'Completed' ? t('matches.history') : match.status) }}
                 </span>
-                <span class="text-[10px]" style="color: var(--text-muted);">
-                  {{ match.match_date ? new Date(match.match_date).toLocaleDateString() : '—' }}
-                </span>
+                <div class="flex items-center gap-2">
+                    <button @click="editMatch(match)" class="p-1 hover:text-blue-500 transition-colors">
+                        <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                    </button>
+                    <button @click="confirmDelete(match)" class="p-1 hover:text-red-500 transition-colors">
+                        <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    </button>
+                    <span class="text-[10px] font-bold tabular-nums ml-1" style="color: var(--text-muted);">
+                        {{ formatMatchDate(match.match_date) }}
+                    </span>
+                </div>
               </div>
               <p class="text-xs font-bold" style="color: var(--text-primary);">
-                {{ match.home_team?.name }} <span style="color: var(--text-muted);">vs</span> {{ match.away_team?.name }}
+                {{ getTeamName(match.home_team) }} <span style="color: var(--text-muted);">vs</span> {{ getTeamName(match.away_team) }}
               </p>
               <p v-if="match.venue" class="text-[10px] mt-1" style="color: var(--text-muted);">📍 {{ match.venue }}</p>
             </div>
@@ -247,13 +318,23 @@ const statusBadge = (status) => {
           </div>
 
           <div class="px-5 py-3.5" style="background-color: var(--bg-surface); border-top: 1px solid var(--border);">
-            <RouterLink to="/matches" class="text-xs font-bold text-blue-500 flex items-center gap-1">
-              View full calendar →
+            <RouterLink to="/matches" class="text-xs font-bold text-blue-500 flex items-center gap-1 uppercase tracking-tighter">
+              {{ t('admin.view_full_calendar') }} →
             </RouterLink>
           </div>
         </div>
       </div>
 
     </div>
+    <ConfirmDialog
+      v-if="showConfirmDelete"
+      :title="t('admin.delete_match_title') || 'Delete Match'"
+      :message="t('admin.delete_match_msg') || 'Are you sure you want to permanently delete this fixture?'"
+      :confirm-label="t('admin.delete') || 'DELETE'"
+      :danger="true"
+      :loading="submitting"
+      @confirm="handleDelete"
+      @cancel="showConfirmDelete = false"
+    />
   </div>
 </template>

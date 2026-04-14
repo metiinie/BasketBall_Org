@@ -30,7 +30,7 @@ export function calculateStandings(matches, teams) {
       homeL:     0,
       roadW:     0,
       roadL:     0,
-      streak:    '-',
+      streak:    '',       // empty until games are played — prevents false red coloring
       ptsFor:    0,
       ptsAgainst: 0,
       ptsDiff:   0,
@@ -105,9 +105,11 @@ export function calculateStandings(matches, teams) {
       s.rank = i + 1
       if (i === 0) {
         s.gb = '—'
-      } else {
+      } else if (leader.played > 0) {
         const diff = ((leader.wins - s.wins) + (s.losses - leader.losses)) / 2
         s.gb = diff === 0 ? '—' : diff.toString()
+      } else {
+        s.gb = '—'
       }
     })
   }
@@ -116,9 +118,10 @@ export function calculateStandings(matches, teams) {
 }
 
 function _processForfeit(match, home, away) {
+  if (!home || !away) return // Safety check for deleted teams
   home.played++
   away.played++
-  const side = match.forfeit_side ?? (match.home_score === null && match.away_score === null ? 'both' : match.home_score === null ? 'home' : 'away')
+  const side = match.forfeit_side ?? (match.home_score === 0 && match.away_score === 20 ? 'home' : match.home_score === 20 && match.away_score === 0 ? 'away' : 'both')
 
   if (side === 'both') {
     home.form.push('L'); away.form.push('L')
@@ -158,21 +161,42 @@ export function _sortStandings(standings, allMatches) {
 function _resolveTiedGroup(group, allMatches) {
   const tiedIds = new Set(group.map(s => s.team.id))
   const h2hMatches = allMatches.filter(m => tiedIds.has(m.home_team_id) && tiedIds.has(m.away_team_id) && m.status !== 'Forfeited' && m.home_score !== null && m.away_score !== null)
+  
   const h2h = {}
   group.forEach(s => { h2h[s.team.id] = { leaguePts: 0, ptsFor: 0, ptsAgainst: 0, ptsDiff: 0 } })
+  
   h2hMatches.forEach(match => {
-    const home = h2h[match.home_team_id]; const away = h2h[match.away_team_id]
+    const home = h2h[match.home_team_id]
+    const away = h2h[match.away_team_id]
     if (!home || !away) return
-    home.ptsFor += match.home_score; home.ptsAgainst += match.away_score; away.ptsFor += match.away_score; away.ptsAgainst += match.home_score
+    home.ptsFor += match.home_score
+    home.ptsAgainst += match.away_score
+    away.ptsFor += match.away_score
+    away.ptsAgainst += match.home_score
     if (match.home_score > match.away_score) { home.leaguePts += 2; away.leaguePts += 1 } 
     else if (match.away_score > match.home_score) { away.leaguePts += 2; home.leaguePts += 1 }
   })
+
   Object.values(h2h).forEach(s => { s.ptsDiff = s.ptsFor - s.ptsAgainst })
+
+  // Sort by H2H League Pts, then H2H Pts Diff, then Forfeit penalty (per FIBA: forfeiter is last), then overall Pts Diff
   group.sort((a, b) => {
-    const ha = h2h[a.team.id]; const hb = h2h[b.team.id]
+    const ha = h2h[a.team.id]
+    const hb = h2h[b.team.id]
+    
+    // 1. H2H League Points
     if (hb.leaguePts !== ha.leaguePts) return hb.leaguePts - ha.leaguePts
+    
+    // 2. H2H Point Difference
     if (hb.ptsDiff !== ha.ptsDiff) return hb.ptsDiff - ha.ptsDiff
+    
+    // 3. FIBA Forfeit Penalty: Team that forfeited is classified last in the tied group
+    // In our statsMap, we tracked 'forfeits' count.
+    if (a.forfeits !== b.forfeits) return a.forfeits - b.forfeits // more forfeits = lower rank
+    
+    // 4. Overall Point Difference
     if (b.ptsDiff !== a.ptsDiff) return b.ptsDiff - a.ptsDiff
+    
     return a.team.name.localeCompare(b.team.name)
   })
   return group

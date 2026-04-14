@@ -42,9 +42,18 @@ CREATE TABLE matches (
   status        match_status NOT NULL DEFAULT 'Scheduled',
   venue         TEXT,
   match_date    TIMESTAMPTZ,
+  is_ot         BOOLEAN DEFAULT false,        -- overtime flag (required by ScoreInputModal)
+  start_date    TIMESTAMPTZ,                  -- round-level dates stored here for legacy support
+  end_date      TIMESTAMPTZ,
   created_at    TIMESTAMPTZ DEFAULT NOW(),
   CHECK (home_team_id != away_team_id)
 );
+
+-- ─── Migration: run this if the table already exists in Supabase ────────────
+-- ALTER TABLE matches ADD COLUMN IF NOT EXISTS is_ot BOOLEAN DEFAULT false;
+-- ALTER TABLE rounds  ADD COLUMN IF NOT EXISTS start_date TIMESTAMPTZ;
+-- ALTER TABLE rounds  ADD COLUMN IF NOT EXISTS end_date   TIMESTAMPTZ;
+
 
 CREATE TABLE round_snapshots (
   id                       UUID PRIMARY KEY DEFAULT uuid_generate_v4(),

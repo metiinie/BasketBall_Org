@@ -2,6 +2,9 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { supabase } from '@/lib/supabase.js'
 
+// Guard: only register the auth state listener once across the app lifecycle
+let _authListenerRegistered = false
+
 export const useAuthStore = defineStore('auth', () => {
   const user = ref(null)
   const loading = ref(true)
@@ -18,9 +21,14 @@ export const useAuthStore = defineStore('auth', () => {
       loading.value = false
     }
 
-    supabase.auth.onAuthStateChange((_event, session) => {
-      user.value = session?.user ?? null
-    })
+    // Only register the listener once — prevents duplicate state updates
+    // when initAuth() is called from both App.vue and the router guard
+    if (!_authListenerRegistered) {
+      _authListenerRegistered = true
+      supabase.auth.onAuthStateChange((_event, session) => {
+        user.value = session?.user ?? null
+      })
+    }
   }
 
   /** Sign in with email/password */
