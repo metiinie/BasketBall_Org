@@ -1,6 +1,4 @@
-<script setup>
-import { computed } from 'vue'
-import { exportStandingsPdf } from '@/utils/exportPdf.js'
+import { computed, ref } from 'vue'
 import { exportStandingsImage } from '@/utils/exportImage.js'
 
 const props = defineProps({
@@ -12,6 +10,8 @@ const props = defineProps({
   showExports: { type: Boolean,        default: true },
   isGlobal:    { type: Boolean,        default: false },
 })
+
+const shareSuccess = ref(false)
 
 const standingsWithTie = computed(() => {
   return props.standings.map((entry, i, arr) => {
@@ -27,10 +27,26 @@ function teamInitial(team) {
   return team?.name?.charAt(0)?.toUpperCase() ?? '?'
 }
 
-async function handleExportPdf() {
-  await exportStandingsPdf(props.standings, {
-    roundLabel: props.roundLabel, gender: props.gender, seasonYear: props.seasonYear,
-  })
+async function handleShare() {
+  const shareData = {
+    title: `EBF League Standings - ${props.roundLabel}`,
+    text: `Check out the high-stakes standings for the EBF ${props.seasonYear} season - ${props.gender} Division!`,
+    url: window.location.href,
+  }
+
+  try {
+    if (navigator.share) {
+      await navigator.share(shareData)
+    } else {
+      await navigator.clipboard.writeText(window.location.href)
+      shareSuccess.value = true
+      setTimeout(() => shareSuccess.value = false, 3000)
+    }
+  } catch (err) {
+    if (err.name !== 'AbortError') {
+      console.error('Share failed:', err)
+    }
+  }
 }
 
 async function handleExportImage() {
@@ -53,12 +69,12 @@ async function handleExportImage() {
         </svg>
         PNG
       </button>
-      <button @click="handleExportPdf"
+      <button @click="handleShare"
         class="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-blue-600/10 hover:bg-blue-600/20 text-blue-500 transition-all">
         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
         </svg>
-        PDF
+        {{ shareSuccess ? 'Link Copied!' : 'Share' }}
       </button>
     </div>
 
