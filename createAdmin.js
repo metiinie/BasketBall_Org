@@ -1,13 +1,29 @@
 import { createClient } from '@supabase/supabase-js'
+import 'dotenv/config'
 
-const supabaseUrl = 'https://ydamkxbjjquthugpxeia.supabase.co'
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlkYW1reGJqanF1dGh1Z3B4ZWlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwNzE4NTYsImV4cCI6MjA5MTY0Nzg1Nn0.7fkA2SKntbW5dG7MxowRDhqpJMRPbJBD3Yys5S8vzs8'
+const supabaseUrl = process.env.VITE_SUPABASE_URL
+const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('[Auth Setup] Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY in environment.')
+  process.exit(1)
+}
 
 const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 async function createAdmin() {
-  const email = 'oriontheman1828@gmail.com'
-  const password = '123456' // Must be at least 6 characters in Supabase
+  const email = process.env.ADMIN_EMAIL
+  const password = process.env.ADMIN_PASSWORD
+
+  if (!email || !password) {
+    console.error('[Auth Setup] Missing ADMIN_EMAIL or ADMIN_PASSWORD in environment.')
+    process.exit(1)
+  }
+
+  if (password.length < 8) {
+    console.error('[Auth Setup] ADMIN_PASSWORD must be at least 8 characters.')
+    process.exit(1)
+  }
 
   console.log(`[Auth Setup] Creating admin officer: ${email}...`)
   

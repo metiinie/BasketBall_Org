@@ -74,6 +74,11 @@ CREATE INDEX idx_rounds_season_year  ON rounds (season_year);
 CREATE INDEX idx_teams_gender        ON teams (gender);
 
 -- ─── Row Level Security ──────────────────────────────────────────────────────
+-- SECURITY NOTE: The write policies below use auth.role() = 'authenticated',
+-- meaning ANY logged-in user can modify data. For production, consider
+-- restricting writes to specific admin users via a custom claim or an
+-- admin_users lookup table, e.g.:
+--   WITH CHECK (auth.uid() IN (SELECT user_id FROM admin_users))
 
 ALTER TABLE teams           ENABLE ROW LEVEL SECURITY;
 ALTER TABLE rounds          ENABLE ROW LEVEL SECURITY;

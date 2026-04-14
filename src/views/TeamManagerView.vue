@@ -80,7 +80,7 @@ async function handleSubmit() {
     await league.fetchTeams()
     setTimeout(() => formSuccess.value = '', 3000)
   } catch (e) {
-    formError.value = e.message || t('admin.failed_save')
+    formError.value = t('admin.failed_save')
   } finally {
     formLoading.value = false
   }
@@ -92,7 +92,7 @@ async function handleDelete() {
     await league.deleteTeam(deleteTarget.value.id)
     deleteTarget.value = null
   } catch (e) {
-    formError.value = e.message
+    formError.value = t('admin.failed_save') || 'Failed to remove team. Please try again.'
   } finally {
     deleteLoading.value = false
   }
