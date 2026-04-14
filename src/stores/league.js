@@ -120,7 +120,8 @@ export const useLeagueStore = defineStore('league', () => {
         .select(`
           *,
           home_team:teams!home_team_id(id, name, gender, logo_url),
-          away_team:teams!away_team_id(id, name, gender, logo_url)
+          away_team:teams!away_team_id(id, name, gender, logo_url),
+          round:rounds(id, round_number, season_year)
         `)
         .eq('round_id', roundId)
         .order('match_date', { nullsFirst: true })

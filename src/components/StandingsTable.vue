@@ -113,23 +113,23 @@ async function handleExportImage() {
       </div>
 
       <!-- Table -->
-      <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse">
+      <div class="overflow-x-auto relative">
+        <table class="w-full text-left border-collapse min-w-[800px]">
           <thead>
-            <tr style="border-bottom: 1px solid var(--border);">
-              <th class="py-3 px-4 text-[9px] font-black uppercase tracking-wider text-center w-10" style="color: var(--text-muted);" title="Rank">#</th>
-              <th class="py-3 px-2 text-[9px] font-black uppercase tracking-wider text-left"         style="color: var(--text-muted);">Team</th>
-              <th class="py-3 px-2 text-[9px] font-black uppercase tracking-wider text-right w-10"  style="color: var(--text-muted);" title="Wins">W</th>
-              <th class="py-3 px-2 text-[9px] font-black uppercase tracking-wider text-right w-10"  style="color: var(--text-muted);" title="Losses">L</th>
-              <th class="py-3 px-2 text-[9px] font-black uppercase tracking-wider text-right w-14"  style="color: var(--text-muted);" title="Winning Percentage">PCT</th>
-              <th class="py-3 px-2 text-[9px] font-black uppercase tracking-wider text-right w-11"  style="color: var(--text-muted);" title="Games Behind">GB</th>
-              <th class="py-3 px-2 text-[9px] font-black uppercase tracking-wider text-center w-16" style="color: var(--text-muted);" title="Home Record">Home</th>
-              <th class="py-3 px-2 text-[9px] font-black uppercase tracking-wider text-center w-16" style="color: var(--text-muted);" title="Road Record">Road</th>
-              <th class="py-3 px-2 text-[9px] font-black uppercase tracking-wider text-right w-11"  style="color: var(--text-muted);" title="Points For (Mark)">PF</th>
-              <th class="py-3 px-2 text-[9px] font-black uppercase tracking-wider text-right w-11"  style="color: var(--text-muted);" title="Points Against">PA</th>
-              <th class="py-3 px-2 text-[9px] font-black uppercase tracking-wider text-right w-10"  style="color: var(--text-muted);" title="Point Difference">PD</th>
-              <th class="py-3 px-2 text-[9px] font-black uppercase tracking-wider text-right w-14"  style="color: var(--text-muted);" title="Current Streak">Strk</th>
-              <th class="py-3 px-4 text-[9px] font-black uppercase tracking-wider text-right w-11"  style="color: var(--text-muted);" title="League Points">Pts</th>
+            <tr class="bg-slate-900/40" style="border-bottom: 2px solid var(--border);">
+              <th class="sticky left-0 z-20 bg-[#111] py-4 px-4 text-[10px] font-black uppercase tracking-wider text-center w-12" style="color: var(--text-muted);" title="Rank">#</th>
+              <th class="sticky left-12 z-20 bg-[#111] py-4 px-2 text-[10px] font-black uppercase tracking-wider text-left min-w-[180px]" style="color: var(--text-muted);">Team</th>
+              <th class="py-4 px-2 text-[10px] font-black uppercase tracking-wider text-right w-12"  style="color: var(--text-muted);" title="Wins">W</th>
+              <th class="py-4 px-2 text-[10px] font-black uppercase tracking-wider text-right w-12"  style="color: var(--text-muted);" title="Losses">L</th>
+              <th class="py-4 px-2 text-[10px] font-black uppercase tracking-wider text-right w-16"  style="color: var(--text-muted);" title="Winning Percentage">PCT</th>
+              <th class="py-4 px-2 text-[10px] font-black uppercase tracking-wider text-right w-12"  style="color: var(--text-muted);" title="Games Behind">GB</th>
+              <th class="py-4 px-2 text-[10px] font-black uppercase tracking-wider text-center w-20" style="color: var(--text-muted);" title="Home Record">Home</th>
+              <th class="py-4 px-2 text-[10px] font-black uppercase tracking-wider text-center w-20" style="color: var(--text-muted);" title="Road Record">Road</th>
+              <th class="py-4 px-2 text-[10px] font-black uppercase tracking-wider text-right w-12"  style="color: var(--text-muted);" title="Points For">PF</th>
+              <th class="py-4 px-2 text-[10px] font-black uppercase tracking-wider text-right w-12"  style="color: var(--text-muted);" title="Points Against">PA</th>
+              <th class="py-4 px-2 text-[10px] font-black uppercase tracking-wider text-right w-12"  style="color: var(--text-muted);" title="Point Difference">PD</th>
+              <th class="py-4 px-2 text-[10px] font-black uppercase tracking-wider text-right w-16"  style="color: var(--text-muted);" title="Current Streak">Strk</th>
+              <th class="py-4 px-6 text-[10px] font-black uppercase tracking-wider text-right w-16"  style="color: var(--text-muted);" title="League Points">Pts</th>
             </tr>
           </thead>
 
@@ -137,65 +137,61 @@ async function handleExportImage() {
             <tr
               v-for="(entry, index) in standingsWithTie"
               :key="entry.team.id"
-              class="group transition-colors"
-              :style="`border-bottom: 1px solid var(--border);`"
-              @mouseenter="$event.currentTarget.style.backgroundColor = 'var(--bg-surface)'"
-              @mouseleave="$event.currentTarget.style.backgroundColor = ''"
+              class="group transition-colors border-b hover:bg-white/5"
+              style="border-color: var(--border);"
             >
-              <!-- Rank -->
-              <td class="py-3.5 px-4 text-center">
-                <span class="text-sm font-bold" style="color: var(--text-secondary);">
-                  {{ index < 9 ? '0' + (index + 1) : (index + 1) }}
+              <!-- Rank (Sticky) -->
+              <td class="sticky left-0 z-10 bg-[#111] py-4 px-4 text-center group-hover:bg-slate-800 transition-colors">
+                <span class="text-sm font-black italic" :class="index < 3 ? 'text-amber-500' : 'text-slate-400'">
+                  {{ index + 1 }}
                 </span>
               </td>
 
-              <!-- Team -->
-              <td class="py-3.5 px-2">
+              <!-- Team (Sticky) -->
+              <td class="sticky left-12 z-10 bg-[#111] py-4 px-2 group-hover:bg-slate-800 transition-colors">
                 <div class="flex items-center gap-3">
-                  <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold overflow-hidden shrink-0"
-                    style="background-color: var(--bg-surface); border: 1px solid var(--border); color: var(--text-muted);">
+                  <div class="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold overflow-hidden shrink-0 border border-white/5 bg-slate-900 shadow-lg">
                     <img v-if="entry.team.logo_url" :src="entry.team.logo_url" class="w-full h-full object-cover"/>
                     <span v-else>{{ teamInitial(entry.team) }}</span>
                   </div>
                   <div class="flex flex-col text-left">
-                    <span class="font-bold text-sm truncate leading-tight group-hover:text-blue-500 transition-colors" style="color: var(--text-primary);">
+                    <span class="font-black text-sm truncate leading-tight group-hover:text-blue-500 transition-colors" style="color: var(--text-primary);">
                       {{ entry.team.name }}
                     </span>
-                    <span v-if="entry.isTied" class="text-xs mt-0.5" style="color: var(--text-muted);">Tied</span>
+                    <span v-if="entry.isTied" class="text-[9px] font-black uppercase tracking-widest text-blue-500 mt-0.5">Statistical Tie</span>
                   </div>
                 </div>
               </td>
 
               <!-- Stats Columns -->
-              <td class="py-3.5 px-2 text-right font-semibold tabular-nums" style="color: var(--text-primary);" title="Wins">{{ entry.wins }}</td>
-              <td class="py-3.5 px-2 text-right font-medium tabular-nums" style="color: var(--text-secondary);" title="Losses">{{ entry.losses }}</td>
+              <td class="py-4 px-2 text-right font-black tabular-nums text-sm" style="color: var(--text-primary);">{{ entry.wins }}</td>
+              <td class="py-4 px-2 text-right font-black tabular-nums text-sm" style="color: var(--text-secondary);">{{ entry.losses }}</td>
               
-              <td class="py-3.5 px-2 text-right tabular-nums text-xs font-bold" style="color: var(--text-primary);" title="Winning Percentage">{{ entry.pct }}</td>
-              <td class="py-3.5 px-2 text-right tabular-nums text-xs" style="color: var(--text-muted);" title="Games Behind">{{ entry.gb }}</td>
+              <td class="py-4 px-2 text-right tabular-nums text-xs font-black tracking-tighter" style="color: var(--text-primary);">{{ entry.pct }}</td>
+              <td class="py-4 px-2 text-right tabular-nums text-xs font-bold" style="color: var(--text-muted);">{{ entry.gb }}</td>
               
-              <td class="py-3.5 px-2 text-center text-[10px] tabular-nums font-bold" style="color: var(--text-secondary);" :title="`${entry.homeW} Wins, ${entry.homeL} Losses`">
+              <td class="py-4 px-2 text-center text-[11px] tabular-nums font-bold text-slate-400">
                 {{ entry.homeW }}-{{ entry.homeL }}
               </td>
-              <td class="py-3.5 px-2 text-center text-[10px] tabular-nums font-bold" style="color: var(--text-secondary);" :title="`${entry.roadW} Wins, ${entry.roadL} Losses`">
+              <td class="py-4 px-2 text-center text-[11px] tabular-nums font-bold text-slate-400">
                 {{ entry.roadW }}-{{ entry.roadL }}
               </td>
 
-              <td class="py-3.5 px-2 text-right tabular-nums text-xs" style="color: var(--text-secondary);" title="Points For">{{ entry.ptsFor }}</td>
-              <td class="py-3.5 px-2 text-right tabular-nums text-xs" style="color: var(--text-muted);" title="Points Against">{{ entry.ptsAgainst }}</td>
+              <td class="py-4 px-2 text-right tabular-nums text-xs font-bold text-slate-300">{{ entry.ptsFor }}</td>
+              <td class="py-4 px-2 text-right tabular-nums text-xs font-bold text-slate-500">{{ entry.ptsAgainst }}</td>
 
-              <td class="py-3.5 px-2 text-right font-semibold tabular-nums text-xs"
-                :title="`Point Difference: ${entry.ptsDiff}`"
+              <td class="py-4 px-2 text-right font-black tabular-nums text-sm"
                 :style="entry.ptsDiff > 0 ? 'color: #10b981;' : entry.ptsDiff < 0 ? 'color: #f43f5e;' : 'color: var(--text-secondary);'">
                 {{ entry.ptsDiff > 0 ? '+' : '' }}{{ entry.ptsDiff }}
               </td>
 
-              <td class="py-3.5 px-2 text-right font-black tabular-nums text-xs"
-                :style="entry.streak.startsWith('W') ? 'color: #10b981;' : 'color: #f43f5e;'">
+              <td class="py-4 px-2 text-right font-black tabular-nums text-xs"
+                :class="entry.streak.startsWith('W') ? 'text-emerald-500' : 'text-rose-500'">
                 {{ entry.streak }}
               </td>
 
-              <td class="py-3.5 px-4 text-right">
-                <span class="text-sm font-black text-blue-500 tabular-nums">{{ entry.leaguePts }}</span>
+              <td class="py-4 px-6 text-right">
+                <span class="text-base font-black text-blue-500 tabular-nums">{{ entry.leaguePts }}</span>
               </td>
             </tr>
           </TransitionGroup>
