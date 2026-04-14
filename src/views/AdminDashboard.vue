@@ -3,25 +3,31 @@ import { ref, computed, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useAuthStore } from '@/stores/auth.js'
 import { useLeagueStore } from '@/stores/league.js'
+import GlobalFilter from '@/components/GlobalFilter.vue'
 
 const auth = useAuthStore()
 const league = useLeagueStore()
 const scheduleFilter = ref('week')
 
-onMounted(async () => {
-  await league.fetchRounds()
-  if (league.activeRound) {
+async function initDashboard() {
+  await league.fetchRounds(league.selectedSeason)
+  const roundId = league.activeRound ? league.activeRound.id : (league.rounds.length > 0 ? league.rounds[0].id : null)
+  
+  if (roundId) {
     await Promise.all([
-      league.fetchTeams('ወንድ'),
-      league.fetchMatches(league.activeRound.id),
+      league.fetchTeams(league.selectedGender),
+      league.fetchMatches(roundId),
     ])
-  } else if (league.rounds.length > 0) {
-    await Promise.all([
-      league.fetchTeams('ወንድ'),
-      league.fetchMatches(league.rounds[0].id),
-    ])
+  } else {
+    // Just fetch teams if no round exists
+    await league.fetchTeams(league.selectedGender)
   }
-})
+}
+
+onMounted(initDashboard)
+
+// Watch for global navigation changes
+watch([() => league.selectedGender, () => league.selectedSeason], initDashboard)
 
 const completedMatches = computed(() => league.matches.filter(m => m.status === 'Completed').length)
 const totalMatches = computed(() => league.matches.length)
@@ -54,11 +60,14 @@ const matchOfTheWeek = computed(() => upcomingMatches.value.length > 0 ? upcomin
     <!-- Header -->
     <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
       <div>
-        <p class="text-[10px] font-bold text-blue-500 uppercase tracking-widest mb-1">Admin Dashboard</p>
-        <h1 class="text-2xl font-bold tracking-tight" style="color: var(--text-heading);">Welcome, League Admin</h1>
-        <p class="text-sm mt-1 font-medium" style="color: var(--text-muted);">
-          Managing {{ league.activeRound ? `Match Round ${league.activeRound.round_number}` : 'the next season operations' }}.
-        </p>
+          <p class="text-[10px] font-bold text-blue-500 uppercase tracking-widest mb-1">Admin Dashboard</p>
+          <h1 class="text-2xl font-bold tracking-tight" style="color: var(--text-heading);">Welcome, League Admin</h1>
+          <div class="mt-2.5">
+            <GlobalFilter />
+          </div>
+          <p class="text-sm mt-3 font-medium" style="color: var(--text-muted);">
+            Managing {{ league.activeRound ? `Match Round ${league.activeRound.round_number}` : 'the next season operations' }}.
+          </p>
       </div>
       <div class="card px-4 py-2 rounded-full inline-flex items-center gap-2.5">
         <span class="w-2 h-2 rounded-full" :class="league.activeRound ? 'bg-emerald-500 animate-pulse' : 'bg-amber-400'"></span>
