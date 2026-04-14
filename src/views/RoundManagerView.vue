@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useLeagueStore } from '@/stores/league.js'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
@@ -119,6 +119,7 @@ const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 's
           <p class="text-xs mt-0.5" style="color: var(--text-muted);">Operation Control Authority Center</p>
         </div>
       </div>
+    </div>
     <!-- Filters -->
     <div class="card p-4 flex flex-col md:flex-row items-center justify-between gap-4">
       <GlobalFilter />

@@ -15,7 +15,7 @@ export function calculateStandings(matches, teams) {
   if (!teams || teams.length === 0) return []
 
   const completedMatches = matches.filter(
-    m => m.status === 'Completed'
+    m => m.status === 'Completed' || m.status === 'Forfeited'
   ).sort((a, b) => new Date(a.match_date) - new Date(b.match_date))
 
   // ─── 1. Build base stats for each team ─────────────────────────────────
