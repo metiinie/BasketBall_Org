@@ -1,3 +1,4 @@
+<script setup>
 import { computed, ref } from 'vue'
 import { exportStandingsImage } from '@/utils/exportImage.js'
 
