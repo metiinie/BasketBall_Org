@@ -24,7 +24,7 @@ onMounted(() => {
     class="min-h-screen flex flex-col md:flex-row w-full overflow-hidden transition-colors duration-300"
     style="background-color: var(--bg-app); color: var(--text-primary);"
   >
-    <AppSidebar />
+    <AppSidebar v-if="authStore.isAuthenticated" />
     <div class="flex-1 flex flex-col h-screen overflow-y-auto w-full">
       <AppHeader />
       <main class="flex-1 p-6 lg:p-8">

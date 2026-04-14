@@ -166,36 +166,36 @@ const matchOfTheWeek = computed(() => upcomingMatches.value.length > 0 ? upcomin
           <div v-if="matchOfTheWeek" class="flex-1 flex items-center justify-center">
             <div class="flex items-center justify-between w-full max-w-md">
               <!-- Home -->
-              <div class="flex flex-col items-center gap-2">
-                <div class="w-16 h-16 rounded-full flex items-center justify-center text-2xl font-black overflow-hidden"
-                  style="background-color: var(--bg-surface); border: 1px solid var(--border); color: var(--text-muted);">
-                  <img v-if="matchOfTheWeek.home_team?.logo_url" :src="matchOfTheWeek.home_team.logo_url" class="w-full h-full object-cover"/>
-                  <span v-else>{{ matchOfTheWeek.home_team?.name?.charAt(0) }}</span>
+              <div class="flex flex-col items-center gap-3">
+                <div class="w-20 h-20 rounded-2xl flex items-center justify-center overflow-hidden border shadow-lg transition-transform hover:scale-105"
+                  style="background-color: var(--bg-surface); border-color: var(--border);">
+                  <img v-if="matchOfTheWeek.home_team?.logo_url" :src="matchOfTheWeek.home_team.logo_url" class="w-14 h-14 object-contain transition-all duration-300"/>
+                  <span v-else class="text-3xl font-black italic" style="color: var(--text-muted);">{{ matchOfTheWeek.home_team?.name?.charAt(0) }}</span>
                 </div>
-                <h3 class="text-sm font-bold text-center max-w-[110px] truncate" style="color: var(--text-primary);">{{ matchOfTheWeek.home_team?.name }}</h3>
+                <h3 class="text-sm font-black uppercase tracking-widest text-center max-w-[130px] truncate" style="color: var(--text-heading);">{{ matchOfTheWeek.home_team?.name }}</h3>
               </div>
 
-              <div class="text-2xl font-black italic px-4" style="color: var(--text-muted);">VS</div>
+              <div class="text-3xl font-black italic px-4" style="color: var(--text-muted); opacity: 0.3;">VS</div>
 
               <!-- Away -->
-              <div class="flex flex-col items-center gap-2">
-                <div class="w-16 h-16 rounded-full flex items-center justify-center text-2xl font-black overflow-hidden"
-                  style="background-color: var(--bg-surface); border: 1px solid var(--border); color: var(--text-muted);">
-                  <img v-if="matchOfTheWeek.away_team?.logo_url" :src="matchOfTheWeek.away_team.logo_url" class="w-full h-full object-cover"/>
-                  <span v-else>{{ matchOfTheWeek.away_team?.name?.charAt(0) }}</span>
+              <div class="flex flex-col items-center gap-3">
+                <div class="w-20 h-20 rounded-2xl flex items-center justify-center overflow-hidden border shadow-lg transition-transform hover:scale-105"
+                  style="background-color: var(--bg-surface); border-color: var(--border);">
+                  <img v-if="matchOfTheWeek.away_team?.logo_url" :src="matchOfTheWeek.away_team.logo_url" class="w-14 h-14 object-contain transition-all duration-300"/>
+                  <span v-else class="text-3xl font-black italic" style="color: var(--text-muted);">{{ matchOfTheWeek.away_team?.name?.charAt(0) }}</span>
                 </div>
-                <h3 class="text-sm font-bold text-center max-w-[110px] truncate" style="color: var(--text-primary);">{{ matchOfTheWeek.away_team?.name }}</h3>
+                <h3 class="text-sm font-black uppercase tracking-widest text-center max-w-[130px] truncate" style="color: var(--text-heading);">{{ matchOfTheWeek.away_team?.name }}</h3>
               </div>
             </div>
           </div>
 
           <div v-else class="flex-1 flex items-center justify-center py-6">
-            <p class="text-sm font-medium" style="color: var(--text-muted);">No upcoming scheduled matches</p>
+            <p class="text-xs font-black uppercase tracking-widest opacity-40" style="color: var(--text-muted);">No upcoming scheduled matches</p>
           </div>
 
           <div class="flex justify-center gap-3 mt-5">
-            <RouterLink to="/admin/scores" class="btn-primary px-6 py-2 rounded-full text-xs tracking-widest">Enter Score</RouterLink>
-            <RouterLink to="/matches" class="btn-ghost px-6 py-2 rounded-full text-xs tracking-widest">View Matches</RouterLink>
+            <RouterLink to="/admin/scores" class="btn-primary px-8 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest">Enter Score</RouterLink>
+            <RouterLink to="/matches" class="btn-ghost px-8 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest">View Schedule</RouterLink>
           </div>
         </div>
 
@@ -204,34 +204,37 @@ const matchOfTheWeek = computed(() => upcomingMatches.value.length > 0 ? upcomin
 
           <!-- Upcoming Schedule -->
           <div class="card rounded-2xl p-5">
-            <div class="flex justify-between items-center mb-4">
-              <h2 class="text-[10px] font-bold uppercase tracking-widest" style="color: var(--text-muted);">Upcoming Schedule</h2>
+            <div class="flex justify-between items-center mb-5">
+              <h2 class="text-[10px] font-black uppercase tracking-widest" style="color: var(--text-muted);">Upcoming Lineup</h2>
               <div class="flex rounded-lg p-0.5" style="background-color: var(--bg-surface);">
                 <button @click="scheduleFilter = 'today'"
-                  :class="scheduleFilter === 'today' ? 'bg-blue-600 text-white shadow-sm' : ''"
+                  :class="scheduleFilter === 'today' ? 'bg-blue-600/20 text-blue-500' : ''"
                   :style="scheduleFilter !== 'today' ? 'color: var(--text-muted);' : ''"
-                  class="px-2.5 py-1 rounded-md text-[9px] font-bold uppercase tracking-widest transition-all">Today</button>
+                  class="px-3 py-1.5 rounded-md text-[9px] font-black uppercase tracking-widest transition-all">Today</button>
                 <button @click="scheduleFilter = 'week'"
-                  :class="scheduleFilter === 'week' ? 'bg-blue-600 text-white shadow-sm' : ''"
+                  :class="scheduleFilter === 'week' ? 'bg-blue-600/20 text-blue-500' : ''"
                   :style="scheduleFilter !== 'week' ? 'color: var(--text-muted);' : ''"
-                  class="px-2.5 py-1 rounded-md text-[9px] font-bold uppercase tracking-widest transition-all">Week</button>
+                  class="px-3 py-1.5 rounded-md text-[9px] font-black uppercase tracking-widest transition-all">Week</button>
               </div>
             </div>
 
-            <div class="space-y-3">
-              <div v-for="(match, index) in upcomingMatches" :key="match.id" class="flex gap-3 items-start">
-                <div class="text-center pt-0.5 w-6 flex-shrink-0">
-                  <p class="text-[9px] font-bold uppercase tracking-widest" style="color: var(--text-muted);">Sch</p>
-                  <p class="text-base font-black" style="color: var(--text-primary);">{{ index + 1 }}</p>
+            <div class="space-y-4">
+              <div v-for="(match, index) in upcomingMatches" :key="match.id" class="flex gap-4 items-center group">
+                <div class="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center shrink-0 border"
+                     style="background-color: var(--bg-surface); border-color: var(--border);">
+                  <img v-if="match.home_team?.logo_url" :src="match.home_team.logo_url" class="w-7 h-7 object-contain"/>
+                  <span v-else class="text-[10px] font-black" style="color: var(--text-muted);">{{ match.home_team?.name?.charAt(0) }}</span>
                 </div>
-                <div class="pl-3 w-full relative" style="border-left: 1px solid var(--border);">
-                  <p class="text-xs font-bold" style="color: var(--text-primary);">
-                    {{ match.home_team?.name }} <span style="color: var(--text-muted);">vs</span> {{ match.away_team?.name }}
+                <div class="flex-1 relative">
+                  <p class="text-[11px] font-black uppercase tracking-tight" style="color: var(--text-primary);">
+                    {{ match.home_team?.name }} <span class="opacity-30 mx-1">vs</span> {{ match.away_team?.name }}
                   </p>
-                  <p class="text-[10px] font-medium text-blue-500 mt-0.5">{{ match.venue || 'TBA' }} • {{ match.match_date ? new Date(match.match_date).toLocaleDateString() : 'TBA' }}</p>
+                  <p class="text-[9px] font-black uppercase tracking-[0.1em] text-blue-500 mt-1 opacity-70">{{ match.venue || 'Center Court' }} • {{ match.match_date ? new Date(match.match_date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'TBA' }}</p>
                 </div>
               </div>
-              <div v-if="!upcomingMatches.length" class="py-4 text-center text-xs" style="color: var(--text-muted);">No upcoming matches</div>
+              <div v-if="!upcomingMatches.length" class="py-10 text-center">
+                <p class="text-[10px] font-black uppercase tracking-widest opacity-30" style="color: var(--text-muted);">No matches listed</p>
+              </div>
             </div>
           </div>
 
