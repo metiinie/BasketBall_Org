@@ -29,7 +29,12 @@ const navLinks = computed(() => {
 })
 
 function isActive(link) {
-  return route.path === link.to || (link.to !== '/' && route.path.startsWith(link.to))
+  // '/' and '/admin' (base dashboard) should only be active on exact match 
+  // to prevent overlapping highlights with sub-routes.
+  if (link.to === '/' || link.to === '/admin') {
+    return route.path === link.to
+  }
+  return route.path.startsWith(link.to)
 }
 </script>
 
