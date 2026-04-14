@@ -113,6 +113,10 @@
   &::-webkit-scrollbar { display: none; }
 }
 
+@utility badge {
+  @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium;
+}
+
 /* ── Component Layer ────────────────────────────────────────────────────── */
 
 @layer components {
@@ -198,7 +202,6 @@
   }
 
   /* Status badges */
-  .badge { @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium; }
   .badge-win      { @apply badge bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800; }
   .badge-loss     { @apply badge bg-red-50    text-red-600     border border-red-200     dark:bg-red-900/30     dark:text-red-400     dark:border-red-800; }
   .badge-pending  { @apply badge bg-amber-50  text-amber-700   border border-amber-200   dark:bg-amber-900/30   dark:text-amber-400   dark:border-amber-800; }
