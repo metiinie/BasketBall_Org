@@ -18,6 +18,7 @@
     "title": "የሊጉ ደረጃ",
     "pos": "#",
     "team": "ቡድን",
+    "gp": "ተጫተ",
     "w": "አ",
     "l": "ተ",
     "pct": "አሸ%",
@@ -27,6 +28,7 @@
     "pf": "ለ",
     "pa": "ተ",
     "pd": "GD",
+    "form": "አቋም",
     "strk": "ተከታ",
     "pts": "ነጥብ",
     "statistical_tie": "የአቻ ውጤት",
@@ -41,6 +43,7 @@
     "champion": "የወቅቱ ሻምፒዮን",
     "tooltips": {
       "rank": "ደረጃ",
+      "games_played": "የተደረጉ ጨዋታዎች",
       "wins": "ድሎች",
       "losses": "ሽንፈቶች",
       "home_record": "በሜዳ የተመዘገበ ውጤት",
@@ -49,6 +52,7 @@
       "points_for": "ያገቡት ነጥብ",
       "points_against": "የገቡባቸው ነጥብ",
       "point_difference": "የነጥብ ልዩነት",
+      "form": "የቅርብ ጊዜ አቋም",
       "current_streak": "የአሁኑ ተከታታይ ውጤት",
       "league_points": "የሊግ ነጥብ"
     }

@@ -18,6 +18,7 @@
     "title": "League Standings",
     "pos": "#",
     "team": "Team",
+    "gp": "GP",
     "w": "W",
     "l": "L",
     "pct": "PCT",
@@ -27,6 +28,7 @@
     "pf": "PF",
     "pa": "PA",
     "pd": "PD",
+    "form": "FORM",
     "strk": "Strk",
     "pts": "Pts",
     "statistical_tie": "Statistical Tie",
@@ -41,6 +43,7 @@
     "champion": "Season Champion",
     "tooltips": {
       "rank": "Rank",
+      "games_played": "Games Played",
       "wins": "Wins",
       "losses": "Losses",
       "home_record": "Home Record",
@@ -49,6 +52,7 @@
       "points_for": "Points For",
       "points_against": "Points Against",
       "point_difference": "Point Difference",
+      "form": "Recent Form",
       "current_streak": "Current Streak",
       "league_points": "League Points"
     }

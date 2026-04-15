@@ -9,7 +9,7 @@ const props = defineProps({
   standings:   { type: Array,            default: () => [] },
   loading:     { type: Boolean,          default: false },
   roundLabel:  { type: String,           default: 'Round' },
-  gender:      { type: String,           default: '' }, // raw DB value: 'ወንድ' or 'ሴት'
+  gender:      { type: String,           default: '' },
   seasonYear:  { type: [String, Number], default: '' },
   showExports: { type: Boolean,          default: true },
   isGlobal:    { type: Boolean,          default: false },
@@ -28,21 +28,18 @@ const standingsWithTie = computed(() => {
   })
 })
 
-// Fix: compare against raw DB Amharic gender values, not English strings
 const localizedGender = computed(() => {
   if (props.gender === 'ወንድ') return t('gender.men')
   if (props.gender === 'ሴት')  return t('gender.women')
   return props.gender
 })
 
-
 async function handleShare() {
   const shareData = {
     title: `EBF League Standings - ${props.roundLabel}`,
-    text: `Check out the high-stakes standings for the EBF ${props.seasonYear} season - ${localizedGender.value} Division!`,
+    text: `Check out the standings for the EBF ${props.seasonYear} season - ${localizedGender.value} Division!`,
     url: window.location.href,
   }
-
   try {
     if (navigator.share) {
       await navigator.share(shareData)
@@ -52,9 +49,7 @@ async function handleShare() {
       setTimeout(() => shareSuccess.value = false, 3000)
     }
   } catch (err) {
-    if (err.name !== 'AbortError') {
-      console.error('Share failed:', err)
-    }
+    if (err.name !== 'AbortError') console.error('Share failed:', err)
   }
 }
 
@@ -99,7 +94,7 @@ async function handleExportImage() {
       class="card rounded-2xl overflow-hidden">
 
       <!-- Header -->
-      <div class="px-5 py-4 flex items-center justify-between" style="background-color: var(--bg-surface); border-bottom: 1px solid var(--border);">
+      <div class="px-4 py-4 flex items-center justify-between" style="background-color: var(--bg-surface); border-bottom: 1px solid var(--border);">
         <div class="flex items-center gap-3">
           <div class="w-9 h-9 rounded-lg bg-blue-600/15 flex items-center justify-center">
             <svg viewBox="0 0 32 32" class="w-5 h-5 fill-none stroke-blue-500" stroke-width="2">
@@ -120,104 +115,80 @@ async function handleExportImage() {
         </div>
       </div>
 
-      <!-- Table -->
-      <div class="overflow-x-auto relative shadow-sm">
-        <table class="w-full text-left border-collapse min-w-[580px] lg:min-w-[900px]">
-          <thead>
-            <tr class="transition-colors" style="background-color: var(--bg-surface); border-bottom: 2px solid var(--border);">
-              <th class="sticky left-0 z-20 py-3 sm:py-4 px-3 sm:px-4 text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-center w-10 sm:w-12" 
-                  style="background-color: var(--bg-card); color: var(--text-muted); border-right: 1px solid var(--border);" :title="t('standings.tooltips.rank')">{{ t('standings.pos') }}</th>
-              <th class="sticky left-10 sm:left-12 z-20 py-3 sm:py-4 px-2 sm:px-3 text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-left min-w-[120px] sm:min-w-[180px]" 
-                  style="background-color: var(--bg-card); color: var(--text-muted); border-right: 1px solid var(--border);">{{ t('standings.team') }}</th>
-              <th class="py-3 sm:py-4 px-1.5 sm:px-2 text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-right w-10 sm:w-12"  style="color: var(--text-muted);" :title="t('standings.tooltips.wins')">{{ t('standings.w') }}</th>
-              <th class="py-3 sm:py-4 px-1.5 sm:px-2 text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-right w-10 sm:w-12"  style="color: var(--text-muted);" :title="t('standings.tooltips.losses')">{{ t('standings.l') }}</th>
-              <!-- PCT column — calculated in standings engine -->
-              <th class="hidden md:table-cell py-4 px-2 text-[10px] font-black uppercase tracking-wider text-right w-14" style="color: var(--text-muted);" :title="t('standings.pct')">{{ t('standings.pct') }}</th>
-              <!-- GB column -->
-              <th class="hidden md:table-cell py-4 px-2 text-[10px] font-black uppercase tracking-wider text-right w-10" style="color: var(--text-muted);" :title="t('standings.gb')">{{ t('standings.gb') }}</th>
-
-              <th class="hidden lg:table-cell py-4 px-2 text-[10px] font-black uppercase tracking-wider text-center w-20" style="color: var(--text-muted);" :title="t('standings.tooltips.home_record')">{{ t('standings.home') }}</th>
-              <th class="hidden lg:table-cell py-4 px-2 text-[10px] font-black uppercase tracking-wider text-center w-20" style="color: var(--text-muted);" :title="t('standings.tooltips.road_record')">{{ t('standings.road') }}</th>
-              <th class="py-3 sm:py-4 px-1.5 sm:px-2 text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-right w-10 sm:w-12"  style="color: var(--text-muted);" :title="t('standings.tooltips.forfeits')">F</th>
-              <th class="hidden md:table-cell py-4 px-2 text-[10px] font-black uppercase tracking-wider text-right w-12"  style="color: var(--text-muted);" :title="t('standings.tooltips.points_for')">{{ t('standings.pf') }}</th>
-              <th class="hidden md:table-cell py-4 px-2 text-[10px] font-black uppercase tracking-wider text-right w-12"  style="color: var(--text-muted);" :title="t('standings.tooltips.points_against')">{{ t('standings.pa') }}</th>
-              <th class="py-3 sm:py-4 px-1.5 sm:px-2 text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-right w-10 sm:w-12"  style="color: var(--text-muted);" :title="t('standings.tooltips.point_difference')">{{ t('standings.pd') }}</th>
-              <th class="py-3 sm:py-4 px-1.5 sm:px-2 text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-right w-14 sm:w-16"  style="color: var(--text-muted);" :title="t('standings.tooltips.current_streak')">{{ t('standings.strk') }}</th>
-              <th class="py-3 sm:py-4 px-4 sm:px-6 text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-right w-14 sm:w-16"  style="color: var(--text-muted);" :title="t('standings.tooltips.league_points')">{{ t('standings.pts') }}</th>
-            </tr>
-          </thead>
-
-          <TransitionGroup name="standing-row" tag="tbody">
-            <tr
-              v-for="(entry, index) in standingsWithTie"
-              :key="entry.team.id"
-              class="group transition-colors border-b hover:bg-slate-500/5"
-              style="border-color: var(--border);"
-            >
-              <!-- Rank (Sticky) -->
-              <td class="sticky left-0 z-10 py-3 sm:py-4 px-3 sm:px-4 text-center transition-colors shadow-[1px_0_0_0_rgba(0,0,0,0.05)]"
-                  style="background-color: var(--bg-card); border-right: 1px solid var(--border);">
-                <span class="text-xs sm:text-sm font-black italic" :class="index < 3 ? 'text-amber-500' : ''" :style="index < 3 ? '' : 'color: var(--text-muted);'">
-                  {{ index + 1 }}
-                </span>
-              </td>
-
-              <!-- Team (Sticky) -->
-              <td class="sticky left-10 sm:left-12 z-10 py-3 sm:py-4 px-2 sm:px-3 transition-colors shadow-[1px_0_0_0_rgba(0,0,0,0.05)]" 
-                  style="background-color: var(--bg-card); border-right: 1px solid var(--border);">
-                <div class="flex items-center gap-2 sm:gap-3">
-                  <TeamLogo :team="entry.team" size="w-7 h-7 sm:w-10 sm:h-10" rounded="rounded-lg sm:rounded-xl" />
-                  <div class="flex flex-col text-left min-w-0">
-                    <span class="font-black text-xs sm:text-sm truncate leading-tight transition-colors" style="color: var(--text-primary);">
-                      {{ getTeamName(entry.team) }}
-                    </span>
-                    <span v-if="entry.isTied" class="text-[7px] sm:text-[9px] font-black uppercase tracking-widest text-blue-500 mt-0.5">{{ t('standings.statistical_tie') }}</span>
-                  </div>
-                </div>
-              </td>
-
-              <!-- W / L -->
-              <td class="py-3 sm:py-4 px-1.5 sm:px-2 text-right font-black tabular-nums text-xs sm:text-sm" style="color: var(--text-primary);">{{ entry.wins }}</td>
-              <td class="py-3 sm:py-4 px-1.5 sm:px-2 text-right font-black tabular-nums text-xs sm:text-sm" style="color: var(--text-secondary);">{{ entry.losses }}</td>
-
-              <!-- PCT — now rendered (was calculated but missing from template) -->
-              <td class="hidden md:table-cell py-4 px-2 text-right tabular-nums text-xs font-bold text-slate-400">{{ entry.pct || '.000' }}</td>
-              <!-- GB -->
-              <td class="hidden md:table-cell py-4 px-2 text-right tabular-nums text-xs font-bold text-slate-400">{{ entry.gb || '—' }}</td>
-
-              <td class="hidden lg:table-cell py-4 px-2 text-center text-[11px] tabular-nums font-bold text-slate-400">
-                {{ entry.homeW }}-{{ entry.homeL }}
-              </td>
-              <td class="hidden lg:table-cell py-4 px-2 text-center text-[11px] tabular-nums font-bold text-slate-400">
-                {{ entry.roadW }}-{{ entry.roadL }}
-              </td>
-              <td class="py-3 sm:py-4 px-1.5 sm:px-2 text-right font-bold tabular-nums text-xs" :class="entry.forfeits > 0 ? 'text-red-500' : 'text-slate-500'">
-                {{ entry.forfeits }}
-              </td>
-
-              <td class="hidden md:table-cell py-4 px-2 text-right tabular-nums text-xs font-bold text-slate-300">{{ entry.ptsFor }}</td>
-              <td class="hidden md:table-cell py-4 px-2 text-right tabular-nums text-xs font-bold text-slate-500">{{ entry.ptsAgainst }}</td>
-
-              <td class="py-3 sm:py-4 px-1.5 sm:px-2 text-right font-black tabular-nums text-xs sm:text-sm"
-                :style="entry.ptsDiff > 0 ? 'color: #10b981;' : entry.ptsDiff < 0 ? 'color: #f43f5e;' : 'color: var(--text-secondary);'">
-                {{ entry.ptsDiff > 0 ? '+' : '' }}{{ entry.ptsDiff }}
-              </td>
-
-              <!-- Streak — fix: empty string is neutral, only apply colors when W/L prefix exists -->
-              <td class="py-3 sm:py-4 px-1.5 sm:px-2 text-right font-black tabular-nums text-[10px] sm:text-xs"
-                :class="entry.streak ? (entry.streak.startsWith('W') ? 'text-emerald-500' : 'text-rose-500') : 'text-slate-500'">
-                {{ entry.streak || '—' }}
-              </td>
-
-              <td class="py-3 sm:py-4 px-4 sm:px-6 text-right">
-                <span class="text-sm sm:text-base font-black text-blue-500 tabular-nums">{{ entry.leaguePts }}</span>
-              </td>
-            </tr>
-          </TransitionGroup>
-        </table>
+      <!-- Column Legend -->
+      <div class="standings-row standings-header" style="background-color: var(--bg-surface); border-bottom: 2px solid var(--border);">
+        <div class="col-rank" style="color: var(--text-muted);" :title="t('standings.tooltips.rank')">#</div>
+        <div class="col-team" style="color: var(--text-muted);">{{ t('standings.team') }}</div>
+        <div class="col-stat" style="color: var(--text-muted);" :title="t('standings.tooltips.games_played')">{{ t('standings.gp') }}</div>
+        <div class="col-stat" style="color: var(--text-muted);" :title="t('standings.tooltips.wins')">{{ t('standings.w') }}</div>
+        <div class="col-stat" style="color: var(--text-muted);" :title="t('standings.tooltips.losses')">{{ t('standings.l') }}</div>
+        <div class="col-stat col-wide" style="color: var(--text-muted);" :title="t('standings.tooltips.points_for')">{{ t('standings.pf') }}</div>
+        <div class="col-stat col-wide" style="color: var(--text-muted);" :title="t('standings.tooltips.points_against')">{{ t('standings.pa') }}</div>
+        <div class="col-stat" style="color: var(--text-muted);" :title="t('standings.tooltips.point_difference')">{{ t('standings.pd') }}</div>
+        <div class="col-form-hdr" style="color: var(--text-muted);" :title="t('standings.tooltips.form')">{{ t('standings.form') }}</div>
+        <div class="col-pts" style="color: var(--text-muted);" :title="t('standings.tooltips.league_points')">{{ t('standings.pts') }}</div>
       </div>
 
-      <!-- Champion Banner — fixed: uses proper i18n key instead of brittle string split -->
+      <!-- Rows -->
+      <TransitionGroup name="standing-row" tag="div">
+        <div
+          v-for="(entry, index) in standingsWithTie"
+          :key="entry.team.id"
+          class="standings-row standings-data-row group"
+          style="border-bottom: 1px solid var(--border);"
+        >
+          <!-- Rank -->
+          <div class="col-rank">
+            <span class="rank-badge" :class="index < 3 ? 'rank-top' : 'rank-normal'">
+              {{ index + 1 }}
+            </span>
+          </div>
+
+          <!-- Team -->
+          <div class="col-team">
+            <TeamLogo :team="entry.team" size="w-7 h-7" rounded="rounded-lg" />
+            <div class="team-info">
+              <span class="team-name" style="color: var(--text-primary);">{{ getTeamName(entry.team) }}</span>
+              <span v-if="entry.isTied" class="tie-badge">{{ t('standings.statistical_tie') }}</span>
+            </div>
+          </div>
+
+          <!-- GP -->
+          <div class="col-stat" style="color: var(--text-primary);">{{ (entry.wins ?? 0) + (entry.losses ?? 0) }}</div>
+
+          <!-- W -->
+          <div class="col-stat font-black" style="color: var(--text-primary);">{{ entry.wins }}</div>
+
+          <!-- L -->
+          <div class="col-stat" style="color: var(--text-secondary);">{{ entry.losses }}</div>
+
+          <!-- PF -->
+          <div class="col-stat col-wide" style="color: var(--text-secondary);">{{ entry.ptsFor }}</div>
+
+          <!-- PA -->
+          <div class="col-stat col-wide" style="color: var(--text-secondary);">{{ entry.ptsAgainst }}</div>
+
+          <!-- PD -->
+          <div class="col-stat font-black"
+            :style="entry.ptsDiff > 0 ? 'color:#10b981' : entry.ptsDiff < 0 ? 'color:#f43f5e' : 'color:var(--text-secondary)'">
+            {{ entry.ptsDiff > 0 ? '+' : '' }}{{ entry.ptsDiff }}
+          </div>
+
+          <!-- FORM -->
+          <div class="col-form">
+            <div class="form-pills">
+              <span v-for="(res, i) in entry.form" :key="i" class="pill" :class="res === 'W' ? 'pill-w' : 'pill-l'"></span>
+            </div>
+          </div>
+
+          <!-- League PTS -->
+          <div class="col-pts">
+            <span class="pts-badge">{{ entry.leaguePts }}</span>
+          </div>
+        </div>
+      </TransitionGroup>
+
+      <!-- Champion Banner -->
       <div v-if="isGlobal && standings.length > 0"
         class="px-4 py-3 flex items-center gap-3 bg-amber-500/10 border-t border-amber-500/20">
         <svg class="w-4 h-4 text-amber-400 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
@@ -246,3 +217,240 @@ async function handleExportImage() {
 
   </div>
 </template>
+
+<style scoped>
+/* ── Responsive standings grid ──────────────────────────────────────────── */
+/*
+  Columns: # | Team | GP | W | L | PF | PA | PD | PTS
+  On mobile: PF and PA are hidden (col-wide) to save space
+  Everything is visible without horizontal scrolling
+*/
+
+.standings-row {
+  display: grid;
+  grid-template-columns:
+    32px          /* rank  */
+    1fr           /* team  */
+    36px          /* GP    */
+    36px          /* W     */
+    36px          /* L     */
+    44px          /* PF    */
+    44px          /* PA    */
+    44px          /* PD    */
+    44px          /* FORM  */
+    48px;         /* PTS   */
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+}
+
+/* Adjust column widths for small screens to ensure all columns fit */
+@media (max-width: 480px) {
+  .standings-row {
+    grid-template-columns:
+      24px   /* rank */
+      minmax(40px, 1fr) /* team */
+      26px   /* GP   */
+      26px   /* W    */
+      26px   /* L    */
+      30px   /* PF   */
+      30px   /* PA   */
+      32px   /* PD   */
+      38px   /* FORM */
+      36px;  /* PTS  */
+  }
+  
+  .standings-data-row {
+    padding: 8px 6px;
+  }
+  
+  .standings-header {
+    padding: 8px 6px;
+  }
+  
+  .col-stat,
+  .col-wide {
+    font-size: 10px;
+    padding: 0 1px;
+  }
+
+  .col-pts {
+    font-size: 12px;
+  }
+  
+  .pts-badge {
+    font-size: 12px;
+  }
+  
+  .team-name {
+    font-size: 10px;
+  }
+}
+
+/* ── Header row ── */
+.standings-header {
+  padding: 8px 12px;
+}
+
+.standings-header .col-rank,
+.standings-header .col-stat,
+.standings-header .col-wide,
+.standings-header .col-pts {
+  font-size: 9px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  text-align: center;
+}
+
+.standings-header .col-team {
+  font-size: 9px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding-left: 4px;
+}
+
+/* ── Data row ── */
+.standings-data-row {
+  padding: 10px 12px;
+  transition: background-color 0.15s;
+}
+
+.standings-data-row:hover {
+  background-color: rgba(148, 163, 184, 0.04);
+}
+
+/* ── Shared column styles ── */
+.col-rank {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.col-team {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding-right: 4px;
+}
+
+.col-stat,
+.col-wide {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.col-pts {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* ── Rank badge ── */
+.rank-badge {
+  font-size: 12px;
+  font-weight: 900;
+  font-style: italic;
+}
+
+.rank-top {
+  color: #f59e0b;
+}
+
+.rank-normal {
+  color: var(--text-muted);
+}
+
+/* ── Team info ── */
+.team-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.team-name {
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+}
+
+.tie-badge {
+  font-size: 8px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #3b82f6;
+  margin-top: 2px;
+}
+
+/* ── League PTS pill ── */
+.pts-badge {
+  font-size: 14px;
+  font-weight: 900;
+  color: #3b82f6;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Row transition ── */
+.standing-row-move {
+  transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.5, 1);
+}
+
+/* ── Form Pills ── */
+.col-form-hdr {
+  font-size: 9px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  text-align: center;
+}
+
+.col-form {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.form-pills {
+  display: flex;
+  gap: 3px;
+  align-items: center;
+}
+
+.pill {
+  width: 5px;
+  height: 12px;
+  border-radius: 9999px;
+  flex-shrink: 0;
+}
+
+.pill-w {
+  background-color: #10b981; /* emerald-500 */
+}
+
+.pill-l {
+  background-color: #f43f5e; /* rose-500 */
+}
+
+@media (max-width: 480px) {
+  .col-form-hdr {
+    font-size: 10px;
+  }
+  .form-pills {
+    gap: 2px;
+  }
+  .pill {
+    width: 4px;
+    height: 10px;
+  }
+}
+</style>
