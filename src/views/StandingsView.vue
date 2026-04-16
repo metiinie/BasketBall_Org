@@ -63,13 +63,8 @@ const seasonYearLabel = () => getSeasonLabel(league.selectedSeason)
     <div class="card p-6">
       <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div class="flex items-center gap-4">
-          <div class="w-12 h-12 rounded-2xl bg-blue-600 flex-shrink-0 flex items-center justify-center shadow-md shadow-blue-600/30">
-            <svg viewBox="0 0 32 32" class="w-6 h-6" fill="none" stroke="white" stroke-width="2">
-              <circle cx="16" cy="16" r="10"/>
-              <path d="M16 6 Q20 11 20 16 Q20 21 16 26"/>
-              <path d="M16 6 Q12 11 12 16 Q12 21 16 26"/>
-              <line x1="6" y1="16" x2="26" y2="16"/>
-            </svg>
+          <div class="w-14 h-14 sm:w-16 sm:h-16 flex-shrink-0 rounded-2xl bg-white shadow-sm flex items-center justify-center overflow-hidden border border-slate-200/50">
+            <img src="/logos/ebf.png" alt="EBF Logo" class="w-full h-full object-contain p-1.5" />
           </div>
           <div>
             <h1 class="text-xl font-black tracking-tight leading-none mb-1" style="color: var(--text-heading);">{{ t('standings.ebf_standings') }}</h1>

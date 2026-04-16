@@ -17,6 +17,18 @@ const props = defineProps({
 
 const { t } = useI18n()
 const shareSuccess = ref(false)
+const activeTeamId = ref(null)
+
+function toggleTooltip(id) {
+  if (activeTeamId.value === id) {
+    activeTeamId.value = null
+  } else {
+    activeTeamId.value = id
+    setTimeout(() => {
+      if (activeTeamId.value === id) activeTeamId.value = null
+    }, 4000) // auto-hide after 4 seconds
+  }
+}
 
 const standingsWithTie = computed(() => {
   return props.standings.map((entry, i, arr) => {
@@ -96,13 +108,8 @@ async function handleExportImage() {
       <!-- Header -->
       <div class="px-4 py-4 flex items-center justify-between" style="background-color: var(--bg-surface); border-bottom: 1px solid var(--border);">
         <div class="flex items-center gap-3">
-          <div class="w-9 h-9 rounded-lg bg-blue-600/15 flex items-center justify-center">
-            <svg viewBox="0 0 32 32" class="w-5 h-5 fill-none stroke-blue-500" stroke-width="2">
-              <circle cx="16" cy="16" r="10"/>
-              <path d="M16 6 Q20 11 20 16 Q20 21 16 26"/>
-              <path d="M16 6 Q12 11 12 16 Q12 21 16 26"/>
-              <line x1="6" y1="16" x2="26" y2="16"/>
-            </svg>
+          <div class="w-9 h-9 rounded-lg bg-white shadow-sm flex items-center justify-center overflow-hidden border border-slate-200/50">
+            <img src="/logos/ebf.png" alt="EBF Logo" class="w-full h-full object-contain p-1" />
           </div>
           <div>
             <div class="text-sm font-bold leading-none" style="color: var(--text-primary);">{{ t('global.league') }}</div>
@@ -145,12 +152,19 @@ async function handleExportImage() {
           </div>
 
           <!-- Team -->
-          <div class="col-team">
+          <div class="col-team" @click="toggleTooltip(entry.team.id)" style="cursor: pointer; position: relative;">
             <TeamLogo :team="entry.team" size="w-7 h-7" rounded="rounded-lg" />
             <div class="team-info">
-              <span class="team-name" style="color: var(--text-primary);">{{ getTeamName(entry.team) }}</span>
-              <span v-if="entry.isTied" class="tie-badge">{{ t('standings.statistical_tie') }}</span>
+              <span class="team-name" style="color: var(--text-primary);" :title="getTeamName(entry.team)">{{ getTeamName(entry.team) }}</span>
             </div>
+
+            <!-- Mobile Tap Tooltip -->
+            <Transition name="fade">
+              <div v-if="activeTeamId === entry.team.id" class="mobile-tap-tooltip lg:hidden">
+                {{ getTeamName(entry.team) }}
+                <div class="tooltip-arrow"></div>
+              </div>
+            </Transition>
           </div>
 
           <!-- GP -->
@@ -248,24 +262,24 @@ async function handleExportImage() {
 @media (max-width: 480px) {
   .standings-row {
     grid-template-columns:
-      24px   /* rank */
-      minmax(40px, 1fr) /* team */
-      26px   /* GP   */
-      26px   /* W    */
-      26px   /* L    */
-      30px   /* PF   */
-      30px   /* PA   */
-      32px   /* PD   */
-      38px   /* FORM */
-      36px;  /* PTS  */
+      16px   /* rank */
+      minmax(60px, 1fr) /* team */
+      22px   /* GP   */
+      22px   /* W    */
+      22px   /* L    */
+      28px   /* PF   */
+      28px   /* PA   */
+      30px   /* PD   */
+      34px   /* FORM */
+      28px;  /* PTS  */
   }
   
   .standings-data-row {
-    padding: 8px 6px;
+    padding: 8px 4px;
   }
   
   .standings-header {
-    padding: 8px 6px;
+    padding: 8px 4px;
   }
   
   .col-stat,
@@ -282,8 +296,27 @@ async function handleExportImage() {
     font-size: 12px;
   }
   
+  .col-team {
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+    padding-right: 2px;
+  }
+
+  .team-info {
+    align-items: center;
+    width: 100%;
+  }
+
   .team-name {
-    font-size: 10px;
+    font-size: 8px;
+    font-weight: 500;
+    text-align: center;
+    white-space: normal;
+    word-break: break-word; /* Let the browser natively break big words to the next line */
+    width: 100%; /* Force use of full available width */
+    line-height: 1.1;
+    margin-top: 3px;
   }
 }
 
@@ -452,5 +485,48 @@ async function handleExportImage() {
     width: 4px;
     height: 10px;
   }
+}
+
+/* ── Mobile Tap Tooltip ── */
+.mobile-tap-tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  z-index: 60;
+  pointer-events: none;
+  border: 1px solid var(--border);
+  margin-bottom: 8px;
+}
+
+.tooltip-arrow {
+  position: absolute;
+  bottom: -5px;
+  left: 50%;
+  transform: translateX(-50%) rotate(45deg);
+  width: 10px;
+  height: 10px;
+  background-color: var(--bg-card);
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translateX(-50%) translateY(5px) scale(0.95);
 }
 </style>
