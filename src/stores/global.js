@@ -34,13 +34,21 @@ export const useGlobalStore = defineStore('global', () => {
       // Fetch all matches across these completed rounds to perform proper FIBA H2H tiebreakers
       const roundIds = validSnapshots.map(s => s.round_id)
       let allMatches = []
-      if (roundIds.length > 0) {
-        const { data: matchesData } = await supabase
+      
+      const chunkSize = 15;
+      for (let i = 0; i < roundIds.length; i += chunkSize) {
+        const chunk = roundIds.slice(i, i + chunkSize);
+        
+        const { data: matchesChunk, error: matchErr } = await supabase
           .from('matches')
           .select('*')
-          .in('round_id', roundIds)
+          .in('round_id', chunk)
           .eq('status', 'Completed')
-        allMatches = matchesData || []
+          .range(0, 999) // ensure predictability per chunk
+          
+        if (!matchErr && matchesChunk) {
+           allMatches = allMatches.concat(matchesChunk)
+        }
       }
 
       globalStandings.value = aggregateStandings(validSnapshots, allMatches)

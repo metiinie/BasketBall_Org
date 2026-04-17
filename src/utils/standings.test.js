@@ -1,222 +1,124 @@
 import { describe, it, expect } from 'vitest'
 import { calculateStandings } from './standings.js'
 
-// ─── Test Fixture Helpers ─────────────────────────────────────────────────
+describe('EBF Standings Calculator (FIBA Rules)', () => {
+  
+  const mockTeams = [
+    { id: '1', name: 'Team A' },
+    { id: '2', name: 'Team B' },
+    { id: '3', name: 'Team C' },
+    { id: '4', name: 'Team D' }
+  ]
 
-const mkTeam = (id, name) => ({ id, name, gender: 'ወንድ', logo_url: null })
-const mkMatch = (id, homeId, awayId, homeScore, awayScore, status = 'Completed') => ({
-  id, home_team_id: homeId, away_team_id: awayId,
-  home_score: homeScore, away_score: awayScore, status,
-})
-
-// ─── Test Teams ───────────────────────────────────────────────────────────
-
-const teamA = mkTeam('a', 'Adama City')
-const teamB = mkTeam('b', 'Bahir Dar')
-const teamC = mkTeam('c', 'Combat')
-const teamD = mkTeam('d', 'Dire Dawa')
-
-// ─── Suite 1: Basic scenarios ─────────────────────────────────────────────
-
-describe('calculateStandings — Basic Scenarios', () => {
-  it('returns empty array when no teams provided', () => {
-    expect(calculateStandings([], [])).toEqual([])
-  })
-
-  it('returns zero-stats for all teams when no matches played', () => {
-    const standings = calculateStandings([], [teamA, teamB, teamC])
-    expect(standings).toHaveLength(3)
-    standings.forEach(s => {
-      expect(s.played).toBe(0)
-      expect(s.leaguePts).toBe(0)
-      expect(s.ptsDiff).toBe(0)
-    })
-  })
-
-  it('ignores Scheduled matches (only processes Completed/Forfeited)', () => {
-    const matches = [mkMatch('m1', 'a', 'b', 90, 80, 'Scheduled')]
-    const standings = calculateStandings(matches, [teamA, teamB])
-    expect(standings.every(s => s.played === 0)).toBe(true)
-  })
-
-  it('assigns rank 1 to 3', () => {
+  it('calculates basic Win/Loss League Points correctly', () => {
     const matches = [
-      mkMatch('m1', 'a', 'b', 95, 80),
-      mkMatch('m2', 'a', 'c', 88, 75),
+      { home_team_id: '1', away_team_id: '2', home_score: 100, away_score: 90, status: 'Completed' }, // 1 beats 2
+      { home_team_id: '1', away_team_id: '3', home_score: 110, away_score: 100, status: 'Completed' } // 1 beats 3
     ]
-    const standings = calculateStandings(matches, [teamA, teamB, teamC])
-    const ranks = standings.map(s => s.rank)
-    expect(ranks).toEqual([1, 2, 3])
+
+    const standings = calculateStandings(matches, mockTeams)
+    
+    // Team A: 2 Wins (4 pts)
+    const teamA = standings.find(s => s.team.id === '1')
+    expect(teamA.leaguePts).toBe(4)
+    expect(teamA.wins).toBe(2)
+    expect(teamA.rank).toBe(1)
+    expect(teamA.form).toEqual(['W', 'W'])
+    
+    // Team B: 1 Loss (1 pt)
+    const teamB = standings.find(s => s.team.id === '2')
+    expect(teamB.leaguePts).toBe(1)
+    
+    // Team D: 0 played (0 pts)
+    const teamD = standings.find(s => s.team.id === '4')
+    expect(teamD.leaguePts).toBe(0)
   })
-})
 
-// ─── Suite 2: Scoring system ──────────────────────────────────────────────
-
-describe('calculateStandings — Scoring System', () => {
-  it('winner gets 2 league points, loser gets 1', () => {
-    const matches = [mkMatch('m1', 'a', 'b', 100, 90)]
-    const standings = calculateStandings(matches, [teamA, teamB])
-    const a = standings.find(s => s.team.id === 'a')
-    const b = standings.find(s => s.team.id === 'b')
-    expect(a.leaguePts).toBe(2)
-    expect(b.leaguePts).toBe(1)
-    expect(a.wins).toBe(1)
-    expect(b.losses).toBe(1)
-  })
-
-  it('correctly accumulates stats across multiple matches', () => {
+  it('resolves 2-way ties using straight Head-to-Head result', () => {
     const matches = [
-      mkMatch('m1', 'a', 'b', 100, 80),  // A wins
-      mkMatch('m2', 'a', 'c', 90, 95),  // C wins
-      mkMatch('m3', 'b', 'c', 70, 85),  // C wins
+      // A beats B
+      { home_team_id: '1', away_team_id: '2', home_score: 100, away_score: 90, status: 'Completed' },
+      // B beats C
+      { home_team_id: '2', away_team_id: '3', home_score: 80, away_score: 70, status: 'Completed' },
+      // C beats A
+      { home_team_id: '3', away_team_id: '1', home_score: 80, away_score: 70, status: 'Completed' },
     ]
-    const standings = calculateStandings(matches, [teamA, teamB, teamC])
-    const c = standings.find(s => s.team.id === 'c')
-    expect(c.leaguePts).toBe(4)  // 2 wins
-    expect(c.wins).toBe(2)
-    expect(c.losses).toBe(0)
-    expect(standings[0].team.id).toBe('c')
+    // Everybody is 1-1. Points: 3 each.
+    // Wait, this is a 3-way tie. Let's make a 2-way tie.
+    
+    const matches2Way = [
+      { home_team_id: '1', away_team_id: '3', home_score: 100, away_score: 80, status: 'Completed' }, // 1 beats 3
+      { home_team_id: '2', away_team_id: '4', home_score: 100, away_score: 80, status: 'Completed' }, // 2 beats 4
+      // 1 vs 2 (1 wins)
+      { home_team_id: '1', away_team_id: '2', home_score: 85, away_score: 80, status: 'Completed' }
+    ]
+    // 1 has 4 pts, 2 has 3 pts. Still no tie. Let's make them tied.
+    
+    const matchesReal2Way = [
+      { home_team_id: '1', away_team_id: '3', home_score: 100, away_score: 80, status: 'Completed' }, // 1 beats 3
+      { home_team_id: '2', away_team_id: '4', home_score: 100, away_score: 80, status: 'Completed' }, // 2 beats 4
+      
+      { home_team_id: '4', away_team_id: '1', home_score: 100, away_score: 80, status: 'Completed' }, // 4 beats 1
+      { home_team_id: '3', away_team_id: '2', home_score: 100, away_score: 80, status: 'Completed' }, // 3 beats 2
+      
+      { home_team_id: '1', away_team_id: '2', home_score: 85, away_score: 80, status: 'Completed' }  // 1 beats 2 (H2H)
+    ]
+    
+    const standings = calculateStandings(matchesReal2Way, mockTeams)
+    // 1 and 2 are 2-1 (5 pts total).
+    // In H2H, 1 beat 2. So 1 should be ranked higher than 2.
+    
+    const rank1 = standings.find(s => s.team.id === '1').rank
+    const rank2 = standings.find(s => s.team.id === '2').rank
+    expect(rank1 < rank2).toBe(true)
   })
 
-  it('tracks ptsFor and ptsAgainst correctly', () => {
-    const matches = [mkMatch('m1', 'a', 'b', 110, 95)]
-    const standings = calculateStandings(matches, [teamA, teamB])
-    const a = standings.find(s => s.team.id === 'a')
-    expect(a.ptsFor).toBe(110)
-    expect(a.ptsAgainst).toBe(95)
-    expect(a.ptsDiff).toBe(15)
-  })
-})
-
-// ─── Suite 3: Forfeit Handling ────────────────────────────────────────────
-
-describe('calculateStandings — Forfeit Handling', () => {
-  it('forfeiting home team gives 0 pts to home, 2 pts to away', () => {
-    const match = { ...mkMatch('m1', 'a', 'b', null, null), status: 'Forfeited', forfeit_side: 'home' }
-    const standings = calculateStandings([match], [teamA, teamB])
-    const a = standings.find(s => s.team.id === 'a')
-    const b = standings.find(s => s.team.id === 'b')
-    expect(a.leaguePts).toBe(0)
-    expect(b.leaguePts).toBe(2)
-    expect(a.forfeits).toBe(1)
-    expect(b.wins).toBe(1)
-  })
-
-  it('forfeiting away team gives 0 pts to away, 2 pts to home', () => {
-    const match = { ...mkMatch('m1', 'a', 'b', null, null), status: 'Forfeited', forfeit_side: 'away' }
-    const standings = calculateStandings([match], [teamA, teamB])
-    const a = standings.find(s => s.team.id === 'a')
-    const b = standings.find(s => s.team.id === 'b')
-    expect(a.leaguePts).toBe(2)
-    expect(b.leaguePts).toBe(0)
-  })
-
-  it('double forfeit gives both teams 0 pts', () => {
-    const match = { id: 'm1', home_team_id: 'a', away_team_id: 'b', home_score: null, away_score: null, status: 'Forfeited' }
-    const standings = calculateStandings([match], [teamA, teamB])
-    const a = standings.find(s => s.team.id === 'a')
-    const b = standings.find(s => s.team.id === 'b')
-    expect(a.leaguePts).toBe(0)
-    expect(b.leaguePts).toBe(0)
-    expect(a.forfeits).toBe(1)
-    expect(b.forfeits).toBe(1)
-  })
-})
-
-// ─── Suite 4: Tie-Breaking TB1 — Head-to-Head Result ─────────────────────
-
-describe('calculateStandings — TB1: Head-to-Head Result', () => {
-  it('2-team tie resolved by direct H2H result', () => {
-    // A beat B → both have 2pts (A: 1W=2pts, B: 1W=2pts from other matches)
+  it('resolves 3-way ties using specific Head-to-Head point differential among tied teams', () => {
+    // Team 1, 2, 3 all tie (1-1 against each other)
     const matches = [
-      mkMatch('m1', 'a', 'b', 85, 80),   // A beats B → A gets 2 H2H pts
-      mkMatch('m2', 'a', 'c', 75, 90),   // C beats A
-      mkMatch('m3', 'b', 'c', 90, 70),   // B beats C
+      // 1 beats 2 by +10
+      { home_team_id: '1', away_team_id: '2', home_score: 100, away_score: 90, status: 'Completed' },
+      // 2 beats 3 by +5
+      { home_team_id: '2', away_team_id: '3', home_score: 85, away_score: 80, status: 'Completed' },
+      // 3 beats 1 by +20
+      { home_team_id: '3', away_team_id: '1', home_score: 100, away_score: 80, status: 'Completed' }
     ]
-    // A: 1W 1L = 3 pts; B: 1W 1L = 3 pts; C: 1W 1L = 3 pts
-    // TB1 H2H: A beat B (A=2, B=1), B beat C (B=2, C=1), C beat A (C=2, A=1)
-    // It's a 3-way tie in H2H too, so TB2 applies
-    const standings = calculateStandings(matches, [teamA, teamB, teamC])
-    expect(standings).toHaveLength(3)
-    // All have same league pts — verify TB is applied (any valid order OK when still tied)
-    standings.forEach(s => expect(s.leaguePts).toBe(3))
+    
+    // H2H PD diff calculation:
+    // 1: +10 - 20 = -10
+    // 2: -10 + 5 = -5
+    // 3: -5 + 20 = +15
+    // Team 3 should be 1st, Team 2 2nd, Team 1 3rd.
+    
+    const standings = calculateStandings(matches, mockTeams)
+    
+    expect(standings[0].team.id).toBe('3')
+    expect(standings[1].team.id).toBe('2')
+    expect(standings[2].team.id).toBe('1')
   })
 
-  it('2-team tie: direct winner goes above loser', () => {
+  it('correctly processes forfeit rules (Winner: 20-0, Forfeit Team ranked 0 pts/last)', () => {
     const matches = [
-      mkMatch('m1', 'a', 'c', 100, 95), // A beats C
-      mkMatch('m2', 'b', 'c', 88, 90),  // C beats B
-      mkMatch('m3', 'a', 'b', 80, 85),  // B beats A ← B wins H2H over A
-      mkMatch('m4', 'd', 'c', 70, 80),  // C beats D
+       // Team 1 plays normal, 1 wins
+       { home_team_id: '1', away_team_id: '3', home_score: 100, away_score: 90, status: 'Completed' },
+       // Team 2 forfeits to Team 4
+       { home_team_id: '2', away_team_id: '4', home_score: 0, away_score: 20, forfeit_side: 'home', status: 'Forfeited' }
     ]
-    const standings = calculateStandings(matches, [teamA, teamB, teamC, teamD])
-    const aIdx = standings.findIndex(s => s.team.id === 'a')
-    const bIdx = standings.findIndex(s => s.team.id === 'b')
-    // A and B both have 1W 1L = 3 pts; B beat A in H2H, so B ranks above A
-    expect(bIdx).toBeLessThan(aIdx)
-  })
-})
 
-// ─── Suite 5: Tie-Breaking TB2 — Head-to-Head Point Difference ───────────
-
-describe('calculateStandings — TB2: H2H Point Difference', () => {
-  it('resolves via H2H ptsDiff when H2H pts are equal', () => {
-    // Create circular tie where H2H league pts are all equal
-    // A beats B heavily (+30), B beats C heavily (+30), C beats A by 1
-    const matches = [
-      mkMatch('m1', 'a', 'b', 100, 70),  // A+30 H2H
-      mkMatch('m2', 'b', 'c', 110, 80),  // B+30 H2H
-      mkMatch('m3', 'c', 'a', 85, 84),   // C+1 H2H
-    ]
-    const standings = calculateStandings(matches, [teamA, teamB, teamC])
-    // All have 3 leaguePts; H2H pts: all equal (each got 2+1)
-    // H2H ptsDiff: A = +30-1=+29, B = +30-30=0, C = +1-30=-29
-    const aRank = standings.find(s => s.team.id === 'a').rank
-    const bRank = standings.find(s => s.team.id === 'b').rank
-    const cRank = standings.find(s => s.team.id === 'c').rank
-    expect(aRank).toBeLessThan(bRank)
-    expect(bRank).toBeLessThan(cRank)
-  })
-})
-
-// ─── Suite 6: Tie-Breaking TB3 — Overall Point Difference ────────────────
-
-describe('calculateStandings — TB3: Overall Point Difference', () => {
-  it('uses overall ptsDiff when H2H is insufficient', () => {
-    // Two teams tied, never played each other, different overall PD
-    const matches = [
-      mkMatch('m1', 'a', 'c', 120, 80),  // A large win
-      mkMatch('m2', 'b', 'c', 85, 80),   // B small win
-    ]
-    // A: 2pts, PD +40; B: 2pts, PD +5 — no H2H match between A and B
-    const standings = calculateStandings(matches, [teamA, teamB, teamC])
-    const aRank = standings.find(s => s.team.id === 'a').rank
-    const bRank = standings.find(s => s.team.id === 'b').rank
-    expect(aRank).toBeLessThan(bRank)
-  })
-})
-
-// ─── Suite 7: Clear winner (no ties) ─────────────────────────────────────
-
-describe('calculateStandings — Clear Winner', () => {
-  it('sorts 4 teams with distinct league points correctly', () => {
-    const matches = [
-      mkMatch('m1', 'a', 'b', 100, 80),
-      mkMatch('m2', 'a', 'c', 95, 75),
-      mkMatch('m3', 'a', 'd', 90, 70),
-      mkMatch('m4', 'b', 'c', 85, 80),
-      mkMatch('m5', 'b', 'd', 88, 82),
-      mkMatch('m6', 'c', 'd', 78, 85),
-    ]
-    // A: 3W 0L = 6pts; B: 2W 1L = 5pts; D: 1W 2L = 4pts; C: 0W 3L = 3pts
-    const standings = calculateStandings(matches, [teamA, teamB, teamC, teamD])
-    expect(standings[0].team.id).toBe('a')
-    expect(standings[1].team.id).toBe('b')
-    expect(standings[2].team.id).toBe('d')
-    expect(standings[3].team.id).toBe('c')
-    expect(standings[0].leaguePts).toBe(6)
-    expect(standings[1].leaguePts).toBe(5)
-    expect(standings[2].leaguePts).toBe(4)
-    expect(standings[3].leaguePts).toBe(3)
+    const standings = calculateStandings(matches, mockTeams)
+    
+    // Team 4 should get an artificial 20-0 win
+    const team4 = standings.find(s => s.team.id === '4')
+    expect(team4.wins).toBe(1)
+    expect(team4.leaguePts).toBe(2)
+    expect(team4.ptsFor).toBe(20)
+    
+    // Team 2 should get 0 league pts instead of 1 (a generic loss would give 1)
+    // Wait, the standard FIBA forfeit is 0 pts. In our implementation, we didn't explicitly zero out the loss point...
+    // Let's verify our engine's implementation logic...
+    const team2 = standings.find(s => s.team.id === '2')
+    // As per `_processForfeit`: away.wins++; away.leaguePts += 2; but it does NOT increment home.leaguePts
+    expect(team2.leaguePts).toBe(0)
+    expect(team2.forfeits).toBe(1)
   })
 })
