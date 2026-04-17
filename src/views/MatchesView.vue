@@ -123,25 +123,25 @@ const scrollToDate = (rawDate) => {
     </div>
 
     <!-- Loading -->
-    <div v-if="league.loading" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div v-if="league.loading" class="grid grid-cols-1 md:grid-cols-2 gap-3">
       <div v-for="i in 6" :key="i"
         class="h-32 rounded-2xl animate-pulse"
         style="background-color: var(--bg-surface);"/>
     </div>
 
     <!-- Matches Grouped by Date -->
-    <div v-else-if="matchesByDate.length > 0" class="space-y-10">
+    <div v-else-if="matchesByDate.length > 0" class="space-y-6">
       <div v-for="group in matchesByDate" :key="group.date" 
            :id="`date-${group.date}`"
-           class="space-y-4 scroll-mt-24">
+           class="space-y-2 scroll-mt-24">
         <!-- Date Header -->
-        <h2 class="text-[11px] font-black uppercase tracking-[0.2em] px-1 py-1 border-b" 
-            style="color: var(--text-muted); border-color: var(--border);">
+        <h2 class="text-[11px] font-black uppercase tracking-[0.2em] px-2 py-1.5 rounded bg-slate-500/5 mb-1 inline-block" 
+            style="color: var(--text-secondary);">
           {{ group.localized }}
         </h2>
         
         <!-- Game Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
           <NBAGameCard v-for="match in group.matches" :key="match.id" :match="match"/>
         </div>
       </div>
