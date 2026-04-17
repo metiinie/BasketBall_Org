@@ -177,7 +177,7 @@ export const useLeagueStore = defineStore('league', () => {
         async (payload) => {
           const { eventType, new: newRecord, old: oldRecord } = payload
           if (eventType === 'INSERT') {
-            // Re-fetch the full match with team joins — real-time payloads don't include relations
+            // Re-fetch the full match with team joins
             const { data: fullMatch } = await supabase
               .from('matches')
               .select(`
@@ -188,12 +188,20 @@ export const useLeagueStore = defineStore('league', () => {
               `)
               .eq('id', newRecord.id)
               .single()
-            if (fullMatch) matches.value.push(fullMatch)
+            if (fullMatch) {
+              matches.value.push(fullMatch)
+              // If cumulative is loaded, it should also include this new match
+              if (cumulativeMatches.value.length > 0) cumulativeMatches.value.push(fullMatch)
+            }
           } else if (eventType === 'UPDATE') {
             const idx = matches.value.findIndex(m => m.id === newRecord.id)
             if (idx !== -1) matches.value[idx] = { ...matches.value[idx], ...newRecord }
+            
+            const cumIdx = cumulativeMatches.value.findIndex(m => m.id === newRecord.id)
+            if (cumIdx !== -1) cumulativeMatches.value[cumIdx] = { ...cumulativeMatches.value[cumIdx], ...newRecord }
           } else if (eventType === 'DELETE') {
             matches.value = matches.value.filter(m => m.id !== oldRecord.id)
+            cumulativeMatches.value = cumulativeMatches.value.filter(m => m.id !== oldRecord.id)
           }
         })
       .subscribe()
@@ -292,17 +300,57 @@ export const useLeagueStore = defineStore('league', () => {
     matches.value = []
   }
 
+  const cumulativeMatches = ref([])
+  const cumulativeStandings = computed(() => {
+    if (!teams.value.length) return []
+    return calculateStandings(cumulativeMatches.value, teams.value)
+  })
+
+  async function fetchCumulativeMatches(roundId) {
+    loading.value = true
+    error.value = null
+    try {
+      const currentRound = rounds.value.find(r => r.id === roundId)
+      if (!currentRound) return
+
+      // Include all rounds in the same season up to the currently selected round's number
+      const validRounds = rounds.value.filter(r => 
+        r.season_year === currentRound.season_year && 
+        r.round_number <= currentRound.round_number
+      )
+      const roundIds = validRounds.map(r => r.id)
+      
+      const { data, error: err } = await supabase
+        .from('matches')
+        .select(`
+          *,
+          home_team:teams!home_team_id(id, name, gender, logo_url),
+          away_team:teams!away_team_id(id, name, gender, logo_url),
+          round:rounds(id, round_number, season_year)
+        `)
+        .in('round_id', roundIds)
+        .order('match_date', { nullsFirst: true })
+        
+      if (err) throw err
+      cumulativeMatches.value = data || []
+    } catch (e) {
+      error.value = e.message
+    } finally {
+      loading.value = false
+    }
+  }
+
   /** Clear matches from local state (use instead of direct mutation) */
   function clearMatches() {
     matches.value = []
   }
 
   return {
-    teams, rounds, activeRound, matches, standings, loading, error,
+    teams, rounds, activeRound, matches, cumulativeMatches, standings, cumulativeStandings, loading, error,
     selectedGender, selectedSeason,
     fetchTeams, createTeam, updateTeam, deleteTeam,
     fetchRounds, createRound,
-    fetchMatches, createMatch, updateMatch, deleteMatch,
+    fetchMatches, fetchCumulativeMatches, createMatch, updateMatch, deleteMatch,
     subscribeToMatches, unsubscribeFromMatches,
     updateMatchScore, markMatchForfeit,
     finalizeRound, updateRound, clearMatches

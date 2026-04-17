@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { getSeasonLabel } from '@/utils/dateFormatter.js'
 import StandingsTable from '@/components/StandingsTable.vue'
@@ -13,6 +13,13 @@ const league = useLeagueStore()
 const global = useGlobalStore()
 
 const selectedRound = ref(null)
+const isCumulative = ref(false)
+
+const displayStandings = computed(() => {
+  if (selectedRound.value === 'global') return global.globalStandings
+  if (isCumulative.value) return league.cumulativeStandings
+  return league.standings
+})
 
 async function refreshData() {
   if (!selectedRound.value) return
@@ -25,6 +32,9 @@ async function refreshData() {
       league.fetchMatches(selectedRound.value),
       league.subscribeToMatches(selectedRound.value),
     ])
+    if (isCumulative.value) {
+      await league.fetchCumulativeMatches(selectedRound.value)
+    }
   }
 }
 
@@ -45,6 +55,12 @@ watch(() => league.selectedSeason, async (newSeason) => {
 
 watch([selectedRound, () => league.selectedGender], () => {
   refreshData()
+})
+
+watch(isCumulative, async (newVal) => {
+  if (newVal && selectedRound.value !== 'global' && selectedRound.value) {
+     await league.fetchCumulativeMatches(selectedRound.value)
+  }
 })
 
 const currentRound = () => league.rounds.find(r => r.id === selectedRound.value)
@@ -95,13 +111,14 @@ const seasonYearLabel = () => getSeasonLabel(league.selectedSeason)
 
     <!-- Standings Table -->
     <StandingsTable
-      :standings="selectedRound === 'global' ? global.globalStandings : league.standings"
+      :standings="displayStandings"
       :loading="league.loading || global.loading"
       :round-label="roundLabel()"
       :gender="league.selectedGender"
       :season-year="seasonYearLabel()"
       :is-global="selectedRound === 'global'"
       :show-exports="true"
+      v-model:cumulative="isCumulative"
     />
 
     <!-- FIBA Rules Note -->

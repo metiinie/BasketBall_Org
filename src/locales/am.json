@@ -41,6 +41,8 @@
     "fiba_rule_points": "አሸናፊ = {win} ነጥብ &nbsp;|&nbsp; ተሸናፊ = {loss} ነጥብ &nbsp;|&nbsp; መሰረዝ = {forfeit} ነጥብ",
     "global_season": "አጠቃላይ የጨዋታ ዘመን",
     "champion": "የወቅቱ ሻምፒዮን",
+    "combined": "አጠቃላይ",
+    "round_only": "የዙሩ ብቻ",
     "tooltips": {
       "rank": "ደረጃ",
       "games_played": "የተደረጉ ጨዋታዎች",

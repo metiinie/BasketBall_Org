@@ -41,6 +41,8 @@
     "fiba_rule_points": "Win = {win} pts &nbsp;|&nbsp; Loss = {loss} pt &nbsp;|&nbsp; Forfeit = {forfeit} pts",
     "global_season": "Global Season",
     "champion": "Season Champion",
+    "combined": "Combined",
+    "round_only": "Round Only",
     "tooltips": {
       "rank": "Rank",
       "games_played": "Games Played",

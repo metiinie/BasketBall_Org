@@ -13,7 +13,10 @@ const props = defineProps({
   seasonYear:  { type: [String, Number], default: '' },
   showExports: { type: Boolean,          default: true },
   isGlobal:    { type: Boolean,          default: false },
+  cumulative:  { type: Boolean,          default: false },
 })
+
+const emit = defineEmits(['update:cumulative'])
 
 const { t } = useI18n()
 const shareSuccess = ref(false)
@@ -76,22 +79,39 @@ async function handleExportImage() {
 <template>
   <div class="w-full">
 
-    <!-- Export Controls -->
-    <div v-if="showExports && standings.length > 0" class="flex justify-end gap-2 mb-3">
-      <button @click="handleExportImage"
-        class="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all btn-ghost uppercase tracking-widest">
-        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-        </svg>
-        PNG
-      </button>
-      <button @click="handleShare"
-        class="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-blue-600/10 hover:bg-blue-600/20 text-blue-500 transition-all uppercase tracking-widest">
-        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
-        </svg>
-        {{ shareSuccess ? t('admin.saved') : t('global.share') }}
-      </button>
+    <!-- Header Context & Export Controls -->
+    <div v-if="showExports && standings.length > 0" class="flex items-center justify-between mb-3">
+      
+      <!-- Cumulative Toggle -->
+      <label v-if="!isGlobal" class="flex items-center gap-2 cursor-pointer">
+        <div class="relative flex items-center">
+          <input type="checkbox" class="sr-only" :checked="cumulative" @change="$emit('update:cumulative', $event.target.checked)">
+          <div class="block w-9 h-5 rounded-full transition-colors" :class="cumulative ? 'bg-blue-500' : 'bg-slate-300 dark:bg-slate-600'"></div>
+          <div class="absolute left-0.5 top-0.5 bg-white w-4 h-4 rounded-full transition-transform" :class="{'translate-x-4': cumulative}"></div>
+        </div>
+        <span class="text-[11px] font-bold uppercase tracking-widest" style="color: var(--text-secondary);">
+          {{ cumulative ? t('standings.combined') : t('standings.round_only') }}
+        </span>
+      </label>
+      <div v-else></div>
+
+      <!-- Export Buttons -->
+      <div class="flex justify-end gap-2">
+        <button @click="handleExportImage"
+          class="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all btn-ghost uppercase tracking-widest">
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+          </svg>
+          PNG
+        </button>
+        <button @click="handleShare"
+          class="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-blue-600/10 hover:bg-blue-600/20 text-blue-500 transition-all uppercase tracking-widest">
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+          </svg>
+          {{ shareSuccess ? t('admin.saved') : t('global.share') }}
+        </button>
+      </div>
     </div>
 
     <!-- Loading Skeleton -->

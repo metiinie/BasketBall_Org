@@ -18,12 +18,9 @@ export async function exportStandingsImage(
   try {
     const dataUrl = await toPng(node, {
       quality: 1.0,
-      pixelRatio: 3,          // High-DPI for crisp mobile screenshots
-      backgroundColor: '#0d1b2a',
-      style: {
-        // Remove any scroll overflow that would clip the image
-        overflow: 'visible',
-      },
+      pixelRatio: 2,          // Reduced from 3 to 2 to prevent memory limits
+      // We explicitly DO NOT set a hardcoded backgroundColor, so the card respects light/dark theme.
+      // We DO NOT set overflow: 'visible', so the card's native 'rounded-2xl' overflow-hidden perfectly clips it.
     })
 
     const link = document.createElement('a')
