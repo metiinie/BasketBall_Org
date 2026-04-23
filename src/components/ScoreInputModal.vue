@@ -25,15 +25,16 @@ watch(() => props.match, (m) => {
   }
 }, { immediate: true })
 
-function increaseHome() { homeScore.value = parseInt(homeScore.value || 0) + 1 }
+function increaseHome() { homeScore.value = Math.min(300, parseInt(homeScore.value || 0) + 1) }
 function decreaseHome() { homeScore.value = Math.max(0, parseInt(homeScore.value || 0) - 1) }
-function increaseAway() { awayScore.value = parseInt(awayScore.value || 0) + 1 }
+function increaseAway() { awayScore.value = Math.min(300, parseInt(awayScore.value || 0) + 1) }
 function decreaseAway() { awayScore.value = Math.max(0, parseInt(awayScore.value || 0) - 1) }
 
 function validate() {
-  const h = parseInt(homeScore.value), a = parseInt(awayScore.value)
-  if (isNaN(h) || isNaN(a)) return t('admin.scores_req')
+  const h = Number(homeScore.value), a = Number(awayScore.value)
+  if (!Number.isInteger(h) || !Number.isInteger(a)) return t('admin.scores_req')
   if (h < 0 || a < 0) return t('admin.neg_scores_err')
+  if (h > 300 || a > 300) return t('admin.score_max_err') || 'Score exceeds maximum allowed (300).'
   if (h === a) return t('admin.tie_err')
   return ''
 }
@@ -101,7 +102,7 @@ async function handleForfeit(side) {
               <h3 class="text-sm font-bold text-center leading-tight h-8 flex items-center" style="color: var(--text-heading);">{{ getTeamName(match.home_team) }}</h3>
               
               <div class="w-full space-y-3">
-                <input v-model="homeScore" type="number" 
+                <input v-model="homeScore" type="number" min="0" max="300"
                   class="w-full rounded-lg text-center text-4xl font-bold py-3 outline-none transition-all tabular-nums"
                   style="background-color: var(--bg-surface); border: 1px solid var(--border); color: var(--text-primary);"
                 />
@@ -123,7 +124,7 @@ async function handleForfeit(side) {
               <h3 class="text-sm font-bold text-center leading-tight h-8 flex items-center" style="color: var(--text-heading);">{{ getTeamName(match.away_team) }}</h3>
               
               <div class="w-full space-y-3">
-                <input v-model="awayScore" type="number" 
+                <input v-model="awayScore" type="number" min="0" max="300"
                   class="w-full rounded-lg text-center text-4xl font-bold py-3 outline-none transition-all tabular-nums"
                   style="background-color: var(--bg-surface); border: 1px solid var(--border); color: var(--text-primary);"
                 />
