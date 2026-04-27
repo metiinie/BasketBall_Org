@@ -96,6 +96,8 @@ export const useLeagueStore = defineStore('league', () => {
     try {
       let query = supabase.from('rounds').select('*').order('round_number').range(0, 200)
       if (seasonYear) query = query.eq('season_year', seasonYear)
+      // Filter by the currently selected gender so Men's and Women's rounds are fully separate
+      query = query.eq('gender', selectedGender.value)
       const { data, error: err } = await query
       if (err) throw err
       rounds.value = data || []
@@ -121,12 +123,55 @@ export const useLeagueStore = defineStore('league', () => {
     const { data, error: err } = await supabase.from('rounds').insert({
       season_year: seasonYear,
       round_number: roundNumber,
+      gender: selectedGender.value, // Tie the round to the currently selected gender league
       status: 'Pending'
     }).select().single()
     if (err) throw err
     rounds.value.push(data)
     logAuditAction('CREATE_ROUND', data.id, data)
     return data
+  }
+
+  /**
+   * Set any round as the Active round for the current gender+season.
+   * Safely deactivates the previous active round first.
+   */
+  async function setActiveRound(roundId) {
+    loading.value = true
+    try {
+      // 1. Find the round to activate
+      const targetRound = rounds.value.find(r => r.id === roundId)
+      if (!targetRound) throw new Error('Round not found')
+
+      // 2. Deactivate any currently active round in the same gender+season
+      const currentlyActive = rounds.value.find(r => r.status === 'Active')
+      if (currentlyActive && currentlyActive.id !== roundId) {
+        const { error: deactivateErr } = await supabase
+          .from('rounds')
+          .update({ status: 'Completed' })
+          .eq('id', currentlyActive.id)
+        if (deactivateErr) throw deactivateErr
+      }
+
+      // 3. Activate the target round
+      const { data, error: err } = await supabase
+        .from('rounds')
+        .update({ status: 'Active' })
+        .eq('id', roundId)
+        .select()
+        .single()
+      if (err) throw err
+
+      logAuditAction('SET_ACTIVE_ROUND', roundId, { from: currentlyActive?.id })
+
+      // 4. Refresh rounds state
+      await fetchRounds(targetRound.season_year)
+    } catch (e) {
+      error.value = e.message
+      throw e
+    } finally {
+      loading.value = false
+    }
   }
 
   // ─── Matches ─────────────────────────────────────────────────────────────
@@ -451,10 +496,13 @@ export const useLeagueStore = defineStore('league', () => {
 
     logAuditAction('FINALIZE_ROUND', roundId, { snapshot_count: finalStandings.length })
 
-    // 4. Activate next round (if exists)
+    // 4. Activate next round for the same gender (if exists)
     const current = rounds.value.find(r => r.id === roundId)
     if (current) {
-      const next = rounds.value.find(r => r.round_number === current.round_number + 1)
+      // Find the next round in the same gender to avoid cross-gender activation
+      const next = rounds.value.find(
+        r => r.round_number === current.round_number + 1 && r.gender === current.gender
+      )
       if (next) {
         await supabase.from('rounds').update({ status: 'Active' }).eq('id', next.id)
       }
@@ -527,14 +575,20 @@ export const useLeagueStore = defineStore('league', () => {
     matches.value = []
   }
 
+  /** Clear rounds and activeRound from local state */
+  function clearRounds() {
+    rounds.value = []
+    activeRound.value = null
+  }
+
   return {
     teams, rounds, activeRound, matches, cumulativeMatches, standings, cumulativeStandings, loading, error,
     selectedGender, selectedSeason,
     fetchTeams, createTeam, updateTeam, deleteTeam,
-    fetchRounds, createRound,
+    fetchRounds, createRound, setActiveRound,
     fetchMatches, fetchCumulativeMatches, createMatch, updateMatch, deleteMatch,
     subscribeToMatches, unsubscribeFromMatches,
     updateMatchScore, markMatchForfeit,
-    finalizeRound, updateRound, clearMatches
+    finalizeRound, updateRound, clearMatches, clearRounds
   }
 })

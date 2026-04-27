@@ -67,7 +67,7 @@ const scrollToDate = (rawDate) => {
 </script>
 
 <template>
-  <div class="max-w-6xl mx-auto px-4 py-8 space-y-8 animate-fade-in pb-20">
+  <div class="max-w-6xl mx-auto px-4 py-4 space-y-4 animate-fade-in pb-12">
     
     <!-- Header Area -->
     <div class="flex flex-col md:flex-row items-start md:items-end justify-between gap-6">
@@ -81,7 +81,7 @@ const scrollToDate = (rawDate) => {
     </div>
 
     <!-- Controls & Date Strip -->
-    <div class="space-y-6">
+    <div class="space-y-4">
       <div class="flex flex-col lg:flex-row gap-6 items-start lg:items-center justify-between">
         <div class="w-full lg:max-w-xs">
           <RoundSelector
@@ -130,12 +130,12 @@ const scrollToDate = (rawDate) => {
     </div>
 
     <!-- Matches Grouped by Date -->
-    <div v-else-if="matchesByDate.length > 0" class="space-y-6">
+    <div v-else-if="matchesByDate.length > 0" class="space-y-4">
       <div v-for="group in matchesByDate" :key="group.date" 
            :id="`date-${group.date}`"
            class="space-y-2 scroll-mt-24">
         <!-- Date Header -->
-        <h2 class="text-[11px] font-black uppercase tracking-[0.2em] px-2 py-1.5 rounded bg-slate-500/5 mb-1 inline-block" 
+        <h2 class="text-[10px] font-black uppercase tracking-[0.2em] px-2 py-1 rounded bg-slate-500/5 mb-0.5 inline-block" 
             style="color: var(--text-secondary);">
           {{ group.localized }}
         </h2>

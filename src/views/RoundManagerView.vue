@@ -24,6 +24,17 @@ const success = ref('')
 const showNewRoundModal = ref(false)
 const newRoundData = ref({ round_number: 1, season_year: 2025 })
 
+watch(showNewRoundModal, (isOpen) => {
+  if (isOpen) {
+    newRoundData.value.season_year = league.selectedSeason
+    if (league.rounds.length > 0) {
+      newRoundData.value.round_number = Math.max(...league.rounds.map(r => r.round_number)) + 1
+    } else {
+      newRoundData.value.round_number = 1
+    }
+  }
+})
+
 // Edit Form State
 const editForm = ref({ start_date: '', end_date: '' })
 
@@ -88,13 +99,21 @@ async function handleUpdateRound() {
 
 async function handleUpdateStatus(id, newStatus) {
     updating.value = true
+    error.value = ''
     try {
-        await league.updateRound(id, { status: newStatus })
+        if (newStatus === 'Active') {
+            // setActiveRound safely deactivates the previous active round and refreshes state
+            await league.setActiveRound(id)
+        } else {
+            await league.updateRound(id, { status: newStatus })
+        }
         success.value = t('admin.status_updated') || 'Status updated.'
         setTimeout(() => success.value = '', 3000)
+        // initData re-fetches everything (rounds, teams, matches) for the current active round
         await initData()
     } catch (e) {
         error.value = e.message
+        setTimeout(() => error.value = '', 4000)
     } finally {
         updating.value = false
     }
@@ -296,24 +315,72 @@ const today = computed(() => formatEthiopian(new Date().toISOString()))
             <span class="text-[10px] font-black uppercase tracking-widest opacity-50">{{ t('admin.season_archive') }}</span>
           </div>
           <div class="p-2 space-y-1 max-h-[500px] overflow-y-auto">
-            <div v-for="r in league.rounds" :key="r.id" class="flex items-center gap-3 p-3 rounded-lg border border-transparent hover:bg-slate-500/5"
+            <div v-for="r in league.rounds" :key="r.id"
+              class="p-3 rounded-lg border border-transparent hover:bg-slate-500/5 transition-colors"
               :class="r.status === 'Active' ? 'border-blue-500/20 bg-blue-500/5' : ''">
-              <div class="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center font-bold text-xs tabular-nums text-blue-500">{{ r.round_number }}</div>
-              <div class="flex-1 min-w-0">
-                <p class="text-xs font-bold leading-none">{{ t('matches.round', { num: r.round_number }) }}</p>
-                <p class="text-[9px] mt-1 opacity-50">{{ getSeasonLabel(r.season_year) }} {{ t('global.season') }}</p>
+
+              <!-- Round header row -->
+              <div class="flex items-center gap-3 mb-2">
+                <div class="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center font-bold text-xs tabular-nums text-blue-500 flex-shrink-0">
+                  {{ r.round_number }}
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="text-xs font-bold leading-none">{{ t('matches.round', { num: r.round_number }) }}</p>
+                  <p class="text-[9px] mt-1 opacity-50">{{ getSeasonLabel(r.season_year) }} {{ t('global.season') }}</p>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <div :class="['w-1.5 h-1.5 rounded-full', statusBadge(r.status).dot]"></div>
+                  <span class="text-[8px] font-bold uppercase opacity-60">{{ r.status }}</span>
+                </div>
               </div>
-              <div class="flex flex-col items-end gap-1">
-                <div :class="['w-1.5 h-1.5 rounded-full', statusBadge(r.status).dot]"></div>
-                <span class="text-[8px] font-bold uppercase opacity-40">{{ statusBadge(r.status).text }}</span>
-                <button v-if="r.status === 'Pending'" @click="handleUpdateStatus(r.id, 'Active')" class="text-[8px] font-black text-emerald-500 uppercase tracking-widest hover:underline mt-1">
-                    {{ t('admin.activate') || 'Activate' }}
+
+              <!-- Status Manager Row -->
+              <div class="flex items-center gap-1.5 pl-11">
+                <button
+                  v-if="r.status !== 'Active'"
+                  @click="handleUpdateStatus(r.id, 'Active')"
+                  :disabled="updating"
+                  class="text-[9px] font-black px-2 py-1 rounded-md bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 border border-emerald-500/20 uppercase tracking-widest transition-colors disabled:opacity-40"
+                >
+                  ✓ {{ t('admin.activate') || 'Set Active' }}
+                </button>
+                <span
+                  v-else
+                  class="text-[9px] font-black px-2 py-1 rounded-md bg-emerald-500/10 text-emerald-500 border border-emerald-500/30 uppercase tracking-widest"
+                >
+                  ● Active
+                </span>
+
+                <button
+                  v-if="r.status === 'Active' || r.status === 'Completed'"
+                  @click="handleUpdateStatus(r.id, 'Pending')"
+                  :disabled="updating"
+                  class="text-[9px] font-black px-2 py-1 rounded-md bg-slate-500/10 text-slate-400 hover:bg-slate-500/20 border border-slate-500/20 uppercase tracking-widest transition-colors disabled:opacity-40"
+                >
+                  ↩ Pending
+                </button>
+
+                <button
+                  v-if="r.status !== 'Completed'"
+                  @click="handleUpdateStatus(r.id, 'Completed')"
+                  :disabled="updating"
+                  class="text-[9px] font-black px-2 py-1 rounded-md bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 border border-blue-500/20 uppercase tracking-widest transition-colors disabled:opacity-40"
+                >
+                  ✓ Done
                 </button>
               </div>
             </div>
             <div v-if="!league.rounds.length" class="p-8 text-center text-xs opacity-30">Archive empty.</div>
           </div>
         </div>
+
+        <!-- Feedback Toast -->
+        <transition name="fade">
+          <div v-if="success || error" class="card px-4 py-3 text-xs font-semibold rounded-xl"
+            :class="success ? 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20' : 'text-red-500 bg-red-500/10 border-red-500/20'">
+            {{ success || error }}
+          </div>
+        </transition>
       </div>
 
     </div>
@@ -323,7 +390,7 @@ const today = computed(() => formatEthiopian(new Date().toISOString()))
       <div v-if="showEditModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 backdrop-blur-md bg-slate-950/80">
         <div class="card w-full max-w-sm overflow-hidden border-blue-500/30">
           <div class="px-6 py-4 flex items-center justify-between border-b" style="border-color: var(--border);">
-            <h2 class="text-sm font-bold">{{ t('admin.round_config') }}</h2>
+            <h2 class="text-sm font-bold" style="color: var(--text-heading);">{{ t('admin.round_config') }}</h2>
             <button @click="showEditModal = false" class="btn-icon"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M6 18L18 6M6 6l12 12"/></svg></button>
           </div>
           <div class="p-6 space-y-6">
@@ -348,7 +415,7 @@ const today = computed(() => formatEthiopian(new Date().toISOString()))
       <div v-if="showNewRoundModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 backdrop-blur-md bg-slate-950/80">
         <div class="card w-full max-w-sm overflow-hidden border-emerald-500/30">
           <div class="px-6 py-4 flex items-center justify-between border-b" style="border-color: var(--border);">
-            <h2 class="text-sm font-bold">{{ t('admin.create_new_round_title') || 'Start New Round' }}</h2>
+            <h2 class="text-sm font-bold" style="color: var(--text-heading);">{{ t('admin.create_new_round_title') || 'Start New Round' }}</h2>
             <button @click="showNewRoundModal = false" class="btn-icon"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M6 18L18 6M6 6l12 12"/></svg></button>
           </div>
           <div class="p-6 space-y-6">
@@ -359,10 +426,10 @@ const today = computed(() => formatEthiopian(new Date().toISOString()))
               </div>
               <div class="space-y-2">
                 <label class="text-[11px] font-black uppercase tracking-widest opacity-60">{{ t('global.season') }}</label>
-                <input v-model.number="newRoundData.season_year" type="number" class="input-field h-11 text-sm px-3" disabled/>
+                <input :value="getSeasonLabel(newRoundData.season_year)" type="text" class="input-field h-11 text-sm px-3" disabled/>
               </div>
             </div>
-            <p class="text-[10px] text-slate-500 font-bold uppercase tracking-tight">{{ t('admin.new_round_warn') || 'Matches from previous rounds will be archived.' }}</p>
+            <p class="text-[10px] font-bold uppercase tracking-tight" style="color: var(--text-muted);">{{ t('admin.new_round_warn') || 'Matches from previous rounds will be archived.' }}</p>
             <button @click="handleCreateRound" :disabled="building" class="btn-primary w-full h-11 text-xs font-black uppercase tracking-widest" style="background-color: #10b981; border-color: #059669;">
               {{ building ? (t('admin.initializing') || 'Initializing…') : (t('admin.initialize_round') || 'Start Round') }}
             </button>

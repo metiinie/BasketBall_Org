@@ -27,6 +27,7 @@ function handleError() {
     <img 
       v-if="team?.logo_url && !error" 
       :src="team.logo_url" 
+      crossorigin="anonymous"
       @error="handleError"
       class="w-full h-full object-cover"
     />

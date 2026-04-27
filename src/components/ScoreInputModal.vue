@@ -77,7 +77,7 @@ async function handleForfeit(side) {
       @click.self="emit('close')"
     >
       <!-- Smaller, Compact Container -->
-      <div class="card w-full max-w-2xl animate-slide-up flex flex-col overflow-hidden">
+      <div class="card w-full max-w-2xl max-h-[90vh] sm:max-h-[95vh] animate-slide-up flex flex-col overflow-hidden">
         
         <!-- Compact Header -->
         <div class="px-5 py-3.5 flex items-center justify-between border-b" style="border-color: var(--border);">
@@ -92,12 +92,12 @@ async function handleForfeit(side) {
           </button>
         </div>
 
-        <div class="p-6">
+        <div class="p-4 sm:p-6 overflow-y-auto flex-1">
           <div class="flex flex-col md:flex-row items-center gap-6 justify-between">
             
             <!-- Home Team -->
             <div class="flex-1 w-full flex flex-col items-center gap-3">
-              <TeamLogo :team="match.home_team" size="w-16 h-16" rounded="rounded-xl" />
+              <TeamLogo :team="match.home_team" size="w-12 h-12 sm:w-16 sm:h-16" rounded="rounded-xl" />
               <h3 class="text-sm font-bold text-center leading-tight h-8 flex items-center" style="color: var(--text-heading);">{{ getTeamName(match.home_team) }}</h3>
               
               <div class="w-full space-y-3">
@@ -119,7 +119,7 @@ async function handleForfeit(side) {
 
             <!-- Away Team -->
             <div class="flex-1 w-full flex flex-col items-center gap-3">
-              <TeamLogo :team="match.away_team" size="w-16 h-16" rounded="rounded-xl" />
+              <TeamLogo :team="match.away_team" size="w-12 h-12 sm:w-16 sm:h-16" rounded="rounded-xl" />
               <h3 class="text-sm font-bold text-center leading-tight h-8 flex items-center" style="color: var(--text-heading);">{{ getTeamName(match.away_team) }}</h3>
               
               <div class="w-full space-y-3">
@@ -137,7 +137,7 @@ async function handleForfeit(side) {
           </div>
 
           <!-- Extra Controls: OT & Forfeits -->
-          <div class="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="mt-6 sm:mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
             <!-- OT Toggle -->
             <div class="flex items-center justify-between p-3 rounded-xl border bg-slate-500/5" style="border-color: var(--border);">
               <div class="flex flex-col">
@@ -165,8 +165,8 @@ async function handleForfeit(side) {
           </div>
         </div>
 
-        <!-- Compact Footer -->
-        <div class="px-5 py-4 border-t flex flex-col md:flex-row items-center justify-between gap-4" 
+        <!-- Compact Footer (Fixed at bottom) -->
+        <div class="px-4 sm:px-5 py-3 sm:py-4 border-t flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 shrink-0" 
              style="background-color: var(--bg-surface); border-color: var(--border);">
           <span class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">{{ t('admin.auth_verification_req') }}</span>
           <div class="flex items-center gap-2 w-full md:w-auto">

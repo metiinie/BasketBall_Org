@@ -46,14 +46,22 @@ onMounted(async () => {
 
 watch(() => league.selectedSeason, async (newSeason) => {
   await league.fetchRounds(newSeason)
-  if (league.rounds.length > 0) {
-    selectedRound.value = league.rounds[0].id
-  } else {
-    selectedRound.value = null
-  }
+  if (league.activeRound) selectedRound.value = league.activeRound.id
+  else if (league.rounds.length > 0) selectedRound.value = league.rounds[0].id
+  else selectedRound.value = null
 })
 
-watch([selectedRound, () => league.selectedGender], () => {
+watch(() => league.selectedGender, async () => {
+  league.clearRounds()
+  league.clearMatches()
+  selectedRound.value = null
+  
+  await league.fetchRounds(league.selectedSeason)
+  if (league.activeRound) selectedRound.value = league.activeRound.id
+  else if (league.rounds.length > 0) selectedRound.value = league.rounds[0].id
+})
+
+watch(selectedRound, () => {
   refreshData()
 })
 

@@ -21,6 +21,7 @@ const emit = defineEmits(['update:cumulative'])
 const { t } = useI18n()
 const shareSuccess = ref(false)
 const activeTeamId = ref(null)
+const isExporting = ref(false)
 
 function toggleTooltip(id) {
   if (activeTeamId.value === id) {
@@ -69,10 +70,16 @@ async function handleShare() {
 }
 
 async function handleExportImage() {
-  await exportStandingsImage(
-    'standings-social-card',
-    `EBF_${props.roundLabel.replace(/\s+/g, '_')}_${props.seasonYear}.png`
-  )
+  if (isExporting.value) return
+  isExporting.value = true
+  try {
+    await exportStandingsImage(
+      'standings-social-card',
+      `EBF_${props.roundLabel.replace(/\s+/g, '_')}_${props.seasonYear}.png`
+    )
+  } finally {
+    isExporting.value = false
+  }
 }
 </script>
 
@@ -98,11 +105,16 @@ async function handleExportImage() {
       <!-- Export Buttons -->
       <div class="flex justify-end gap-2">
         <button @click="handleExportImage"
-          class="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all btn-ghost uppercase tracking-widest">
-          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          :disabled="isExporting"
+          class="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all btn-ghost uppercase tracking-widest disabled:opacity-50">
+          <svg v-if="!isExporting" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
           </svg>
-          PNG
+          <svg v-else class="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          {{ isExporting ? t('admin.saving') || 'PNG...' : 'PNG' }}
         </button>
         <button @click="handleShare"
           class="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-blue-600/10 hover:bg-blue-600/20 text-blue-500 transition-all uppercase tracking-widest">
