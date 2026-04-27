@@ -26,13 +26,6 @@ export function formatEthiopian(dateStr, locale = i18n.global.locale.value) {
   }
 }
 
-/**
- * Gets the current year in Ethiopian calendar
- */
-export function currentEthiopianYear() {
-  const d = new Date()
-  return toEthiopian(d.getFullYear(), d.getMonth() + 1, d.getDate()).year
-}
 
 /**
  * Standardizes Gregorian years to Ethiopian season labels.
