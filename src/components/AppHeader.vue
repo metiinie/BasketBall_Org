@@ -55,7 +55,7 @@ onMounted(() => {
       <RouterLink to="/" class="flex items-center gap-2 group">
         <div class="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center border shadow-sm transition-transform group-hover:scale-105 flex-shrink-0"
              style="background-color: var(--bg-surface); border-color: var(--border);">
-          <img src="/logos/ebf.png" class="w-full h-full object-cover" alt="EBF League"/>
+          <img src="/logos/ebf.png" class="w-full h-full object-contain p-0.5" alt="EBF League"/>
         </div>
         <div class="hidden xs:block">
           <h1 class="font-black text-[10px] sm:text-xs tracking-widest leading-none uppercase" style="color: var(--text-heading);">EBF LEAGUE</h1>

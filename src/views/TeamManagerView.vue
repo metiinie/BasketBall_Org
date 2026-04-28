@@ -22,6 +22,9 @@ const formSuccess = ref('')
 const showForm = ref(false)
 
 const form = ref({ name: '', gender: 'ወንድ', logo_url: '' })
+const logoFile = ref(null)
+const logoPreview = ref(null)
+const fileInput = ref(null)
 
 const filteredTeams = computed(() =>
   league.teams.filter(t => t.gender === league.selectedGender)
@@ -35,6 +38,8 @@ onMounted(() => league.fetchTeams())
 function startAdd() {
   editTarget.value = null
   form.value = { name: '', gender: genderTab.value, logo_url: '' }
+  logoFile.value = null
+  logoPreview.value = null
   formError.value = ''
   formSuccess.value = ''
   showForm.value = true
@@ -43,6 +48,8 @@ function startAdd() {
 function startEdit(team) {
   editTarget.value = team
   form.value = { name: team.name, gender: team.gender, logo_url: team.logo_url || '' }
+  logoFile.value = null
+  logoPreview.value = team.logo_url || null
   formError.value = ''
   formSuccess.value = ''
   showForm.value = true
@@ -52,7 +59,24 @@ function cancelForm() {
   editTarget.value = null
   showForm.value = false
   form.value = { name: '', gender: genderTab.value, logo_url: '' }
+  logoFile.value = null
+  logoPreview.value = null
   formError.value = ''
+}
+
+function handleFileChange(e) {
+  const file = e.target.files[0]
+  if (!file) return
+  logoFile.value = file
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    logoPreview.value = e.target.result
+  }
+  reader.readAsDataURL(file)
+}
+
+function triggerFileInput() {
+  fileInput.value.click()
 }
 
 async function handleSubmit() {
@@ -61,18 +85,25 @@ async function handleSubmit() {
   formError.value = ''
   formSuccess.value = ''
   try {
+    let finalLogoUrl = form.value.logo_url
+
+    // If a new file is selected, upload it first
+    if (logoFile.value) {
+      finalLogoUrl = await league.uploadTeamLogo(logoFile.value)
+    }
+
     if (editTarget.value) {
       await league.updateTeam(editTarget.value.id, {
         name: form.value.name.trim(),
         gender: form.value.gender,
-        logo_url: form.value.logo_url || null,
+        logo_url: finalLogoUrl || null,
       })
       formSuccess.value = t('admin.team_updated')
     } else {
       await league.createTeam({
         name: form.value.name.trim(),
         gender: form.value.gender,
-        logo_url: form.value.logo_url || null,
+        logo_url: finalLogoUrl || null,
       })
       formSuccess.value = t('admin.team_added')
     }
@@ -191,8 +222,44 @@ async function handleDelete() {
               </div>
             </div>
             <div class="md:col-span-4">
-              <label class="block text-[10px] font-bold uppercase tracking-wider mb-2" style="color: var(--text-muted);">{{ t('admin.logo_url') }}</label>
-              <input v-model="form.logo_url" type="url" class="input-field" placeholder="https://…"/>
+              <label class="block text-[10px] font-bold uppercase tracking-wider mb-2" style="color: var(--text-muted);">{{ t('admin.team_logo') || 'Team Logo' }}</label>
+              <div class="flex items-center gap-3">
+                <!-- Preview / Action Area -->
+                <div 
+                  @click="triggerFileInput"
+                  class="w-12 h-12 rounded-xl border-2 border-dashed flex items-center justify-center cursor-pointer hover:border-blue-500 hover:bg-blue-500/5 transition-all overflow-hidden group relative"
+                  style="border-color: var(--border);"
+                >
+                  <img v-if="logoPreview" :src="logoPreview" class="w-full h-full object-cover" />
+                  <div v-else class="text-slate-400 group-hover:text-blue-500">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                  </div>
+                  <!-- Hover Overlay -->
+                  <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  </div>
+                </div>
+
+                <!-- Input / Text fallback -->
+                <div class="flex-1">
+                  <input 
+                    ref="fileInput"
+                    type="file" 
+                    accept="image/*" 
+                    class="hidden" 
+                    @change="handleFileChange"
+                  />
+                  <p class="text-[9px] font-bold text-slate-500 mb-1">{{ logoFile ? logoFile.name : (editTarget ? 'Keep current or upload new' : 'Upload from device') }}</p>
+                  <button type="button" @click="triggerFileInput" class="text-[10px] font-black text-blue-500 uppercase tracking-widest hover:underline">
+                    {{ t('admin.choose_file') || 'Choose Image' }}
+                  </button>
+                </div>
+              </div>
             </div>
             <div class="md:col-span-12 flex justify-end gap-3 mt-2">
               <button type="button" @click="cancelForm" class="btn-ghost">{{ t('admin.cancel') || 'Cancel' }}</button>

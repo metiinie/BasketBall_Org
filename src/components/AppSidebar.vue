@@ -69,7 +69,7 @@ function isActive(link) {
     <div class="h-16 flex items-center px-5" style="border-bottom: 1px solid var(--border);">
       <div class="w-9 h-9 rounded-xl overflow-hidden flex items-center justify-center shadow-lg shadow-blue-500/10 mr-3.5 flex-shrink-0 border"
            style="background-color: var(--bg-surface); border-color: var(--border);">
-        <img src="/logos/ebf.png" class="w-full h-full object-cover" alt="EBF League Logo"/>
+        <img src="/logos/ebf.png" class="w-full h-full object-contain p-0.5" alt="EBF League Logo"/>
       </div>
       <div>
         <h1 class="font-black text-sm tracking-[0.15em] leading-none uppercase" style="color: var(--text-heading);">EBF LEAGUE</h1>

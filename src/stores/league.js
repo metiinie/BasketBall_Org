@@ -16,6 +16,42 @@ export const useLeagueStore = defineStore('league', () => {
   const selectedGender = ref('ወንድ')
   const selectedSeason = ref(2025)
 
+  // ─── Storage ─────────────────────────────────────────────────────────────
+
+  /**
+   * Upload a team logo to Supabase Storage.
+   * Assumes a public bucket named 'logos' exists.
+   */
+  async function uploadTeamLogo(file) {
+    if (!file) return null
+    loading.value = true
+    try {
+      const fileExt = file.name.split('.').pop()
+      const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`
+      const filePath = `team-logos/${fileName}`
+
+      const { data, error: uploadError } = await supabase.storage
+        .from('logos')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        })
+
+      if (uploadError) throw uploadError
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('logos')
+        .getPublicUrl(filePath)
+
+      return publicUrl
+    } catch (e) {
+      error.value = e.message
+      throw e
+    } finally {
+      loading.value = false
+    }
+  }
+
   /** Reactive standings computed from current round matches + teams */
   const standings = computed(() => {
     if (!teams.value.length) return []
@@ -589,6 +625,7 @@ export const useLeagueStore = defineStore('league', () => {
     fetchMatches, fetchCumulativeMatches, createMatch, updateMatch, deleteMatch,
     subscribeToMatches, unsubscribeFromMatches,
     updateMatchScore, markMatchForfeit,
-    finalizeRound, updateRound, clearMatches, clearRounds
+    finalizeRound, updateRound, clearMatches, clearRounds,
+    uploadTeamLogo
   }
 })
