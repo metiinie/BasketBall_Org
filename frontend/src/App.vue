@@ -15,7 +15,11 @@ const isUrlMissing = ref(
   import.meta.env.VITE_SUPABASE_URL === 'https://placeholder.supabase.co'
 )
 const isKeyMissing = ref(!import.meta.env.VITE_SUPABASE_ANON_KEY)
-const isConfigMissing = ref(isUrlMissing.value || isKeyMissing.value)
+const isApiLocal = ref(import.meta.env.VITE_API_URL?.includes('localhost') || !import.meta.env.VITE_API_URL)
+const isConfigMissing = ref(isUrlMissing.value || isKeyMissing.value || isApiLocal.value)
+
+// Debug log to help the user see what's happening in the console
+console.log('[EBF] Backend URL:', import.meta.env.VITE_API_URL || 'http://localhost:3000 (Fallback)')
 
 function toggleMenu() {
   isMenuOpen.value = !isMenuOpen.value
@@ -67,6 +71,7 @@ onMounted(() => {
           <div class="text-blue-300"># Missing Keys:</div>
           <div v-if="isUrlMissing" class="text-red-400">- VITE_SUPABASE_URL</div>
           <div v-if="isKeyMissing" class="text-red-400">- VITE_SUPABASE_ANON_KEY</div>
+          <div v-if="isApiLocal" class="text-yellow-400">- VITE_API_URL (Set to localhost or missing)</div>
         </div>
         <button 
           @click="window.location.reload()"
