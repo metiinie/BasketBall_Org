@@ -1,0 +1,96 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TeamGender {
+  MALE   @map("ወንድ")
+  FEMALE @map("ሴት")
+}
+
+enum RoundStatus {
+  Pending
+  Active
+  Completed
+}
+
+enum MatchStatus {
+  Scheduled
+  Completed
+  Forfeited
+}
+
+model Team {
+  id         String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name       String
+  gender     TeamGender
+  logo_url   String?
+  created_at DateTime?  @default(now()) @db.Timestamptz(6)
+  
+  homeMatches Match[] @relation("HomeTeam")
+  awayMatches Match[] @relation("AwayTeam")
+
+  @@map("teams")
+}
+
+model Round {
+  id           String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  season_year  Int
+  round_number Int
+  gender       TeamGender
+  status       RoundStatus @default(Pending)
+  created_at   DateTime?   @default(now()) @db.Timestamptz(6)
+  
+  matches      Match[]
+  snapshots    RoundSnapshot?
+
+  @@unique([season_year, round_number, gender])
+  @@map("rounds")
+}
+
+model Match {
+  id            String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  round_id      String      @db.Uuid
+  home_team_id  String      @db.Uuid
+  away_team_id  String      @db.Uuid
+  home_score    Int?
+  away_score    Int?
+  forfeit_side  String?
+  status        MatchStatus @default(Scheduled)
+  venue         String?
+  match_date    DateTime?   @db.Timestamptz(6)
+  is_ot         Boolean?    @default(false)
+  created_at    DateTime?   @default(now()) @db.Timestamptz(6)
+
+  round     Round @relation(fields: [round_id], references: [id], onDelete: Cascade)
+  home_team Team  @relation("HomeTeam", fields: [home_team_id], references: [id])
+  away_team Team  @relation("AwayTeam", fields: [away_team_id], references: [id])
+
+  @@map("matches")
+}
+
+model RoundSnapshot {
+  id                       String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  round_id                 String    @unique @db.Uuid
+  historical_standings_json Json
+  created_at               DateTime? @default(now()) @db.Timestamptz(6)
+
+  round Round @relation(fields: [round_id], references: [id], onDelete: Cascade)
+
+  @@map("round_snapshots")
+}
+
+model AuditLog {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at DateTime? @default(now()) @db.Timestamptz(6)
+  user_id    String?   @db.Uuid
+  action     String
+  entity_id  String
+  details    Json?
+
+  @@map("audit_logs")
+}
