@@ -11,7 +11,7 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: 'script',
-      includeAssets: ['favicon.svg', 'logos/ebf.png'],
+      includeAssets: ['logos/ebf.png'],
       manifest: {
         name: 'EBF League Management System',
         short_name: 'EBF League',
@@ -32,7 +32,13 @@ export default defineConfig({
             src: '/logos/ebf.png',
             sizes: '512x512',
             type: 'image/png',
-            purpose: 'any maskable'
+            purpose: 'any'
+          },
+          {
+            src: '/logos/ebf.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable'
           }
         ],
         shortcuts: [
