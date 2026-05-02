@@ -30,6 +30,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
       .auth.getUser(token);
 
     if (error || !user) {
+      console.error('Supabase Auth Error:', error?.message || 'No user found');
       throw new UnauthorizedException(error?.message || 'Invalid token');
     }
 
