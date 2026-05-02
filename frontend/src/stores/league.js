@@ -119,7 +119,6 @@ export const useLeagueStore = defineStore('league', () => {
       return data
     } catch (err) {
       if (isNetworkError(err) || !navigator.onLine) {
-        console.warn('Network offline during team update. Note: Team edits are not fully flushed to queue.')
         return teams.value[targetIdx]
       } else {
         const idx = teams.value.findIndex(t => t.id === id)
@@ -281,7 +280,6 @@ export const useLeagueStore = defineStore('league', () => {
 
     // Listen for updates
     socket.on('matchUpdated', (updatedMatch) => {
-      console.log('Real-time Match Update Received:', updatedMatch)
       const idx = matches.value.findIndex(m => m.id === updatedMatch.id)
       if (idx !== -1) {
         matches.value[idx] = updatedMatch
@@ -293,7 +291,6 @@ export const useLeagueStore = defineStore('league', () => {
 
   function unsubscribeFromMatches() {
     socket.off('matchUpdated')
-    console.log('Unsubscribed from real-time updates')
   }
 
   // ─── Optimistic Updates & Offline Resiliency ─────────────────────────────
@@ -322,7 +319,6 @@ export const useLeagueStore = defineStore('league', () => {
         if (idx !== -1) matches.value[idx] = data
         remainingQueue = remainingQueue.filter(q => q.timestamp !== item.timestamp)
       } catch (e) {
-        console.error('Failed to sync offline update:', e)
         if (!isNetworkError(e)) {
            remainingQueue = remainingQueue.filter(q => q.timestamp !== item.timestamp)
         }

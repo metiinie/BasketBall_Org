@@ -4,8 +4,10 @@ import { MatchesController } from './matches.controller';
 import { AuditLogsModule } from '../audit-logs/audit-logs.module';
 import { MatchGateway } from './match.gateway';
 
+import { AuthModule } from '../auth/auth.module';
+
 @Module({
-  imports: [AuditLogsModule],
+  imports: [AuditLogsModule, AuthModule],
   controllers: [MatchesController],
   providers: [MatchesService, MatchGateway],
   exports: [MatchesService, MatchGateway],

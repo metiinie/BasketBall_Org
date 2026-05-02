@@ -27,8 +27,6 @@ const isConfigMissing = ref(
   (isApiLocal.value && import.meta.env.PROD)
 )
 
-// Debug log to help the user see what's happening in the console
-console.log('[EBF] Backend URL:', import.meta.env.VITE_API_URL || 'http://localhost:3000 (Fallback)')
 
 function toggleMenu() {
   isMenuOpen.value = !isMenuOpen.value

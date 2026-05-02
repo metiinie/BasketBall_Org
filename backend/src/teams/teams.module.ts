@@ -3,8 +3,10 @@ import { TeamsService } from './teams.service';
 import { TeamsController } from './teams.controller';
 import { AuditLogsModule } from '../audit-logs/audit-logs.module';
 
+import { AuthModule } from '../auth/auth.module';
+
 @Module({
-  imports: [AuditLogsModule],
+  imports: [AuditLogsModule, AuthModule],
   controllers: [TeamsController],
   providers: [TeamsService],
 })

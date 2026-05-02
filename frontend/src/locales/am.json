@@ -143,6 +143,8 @@
     "team_name": "የቡድን ስም",
     "division_label": "ክፍል",
     "logo_url": "የሎጎ አድራሻ (URL)",
+    "team_logo": "የቡድን ሎጎ",
+    "choose_file": "ምስል ምረጥ",
     "active_member": "ንቁ አባል",
     "remove": "አስወግድ",
     "no_teams_div": "በዚህ ክፍል ውስጥ እስካሁን ምንም ቡድኖች የሉም።",

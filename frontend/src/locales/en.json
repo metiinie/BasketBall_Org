@@ -143,6 +143,8 @@
     "team_name": "Team Name",
     "division_label": "Division",
     "logo_url": "Logo URL",
+    "team_logo": "Team Logo",
+    "choose_file": "Choose Image",
     "active_member": "Active Member",
     "remove": "Remove",
     "no_teams_div": "No teams in this division yet.",

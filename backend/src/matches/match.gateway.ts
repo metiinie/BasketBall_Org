@@ -16,18 +16,13 @@ export class MatchGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 
-  handleConnection(client: Socket) {
-    console.log(`Client connected: ${client.id}`);
-  }
+  handleConnection(client: Socket) {}
 
-  handleDisconnect(client: Socket) {
-    console.log(`Client disconnected: ${client.id}`);
-  }
+  handleDisconnect(client: Socket) {}
 
   @SubscribeMessage('joinRound')
   handleJoinRound(client: Socket, roundId: string) {
     client.join(`round_${roundId}`);
-    console.log(`Client ${client.id} joined round: ${roundId}`);
   }
 
   broadcastMatchUpdate(roundId: string, match: any) {
