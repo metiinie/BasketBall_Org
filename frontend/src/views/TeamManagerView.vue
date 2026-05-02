@@ -26,12 +26,10 @@ const logoFile = ref(null)
 const logoPreview = ref(null)
 const fileInput = ref(null)
 
-const filteredTeams = computed(() =>
-  league.teams.filter(t => t.gender === league.selectedGender)
-)
+const filteredTeams = computed(() => league.filteredTeams)
 
-const menCount = computed(() => league.teams.filter(t => t.gender === 'ወንድ').length)
-const womenCount = computed(() => league.teams.filter(t => t.gender === 'ሴት').length)
+const menCount = computed(() => league.normalizedTeams.filter(t => t.gender === 'ወንድ').length)
+const womenCount = computed(() => league.normalizedTeams.filter(t => t.gender === 'ሴት').length)
 
 onMounted(() => league.fetchTeams())
 
@@ -261,6 +259,20 @@ async function handleDelete() {
                 </div>
               </div>
             </div>
+            <!-- Feedback Messages -->
+            <div class="md:col-span-12 mt-2">
+              <Transition name="banner">
+                <div v-if="formError" class="py-2 px-4 rounded-lg bg-red-500/10 border border-red-500/30 text-red-500 text-[11px] font-bold uppercase mb-4">
+                  {{ formError }}
+                </div>
+              </Transition>
+              <Transition name="banner">
+                <div v-if="formSuccess" class="py-2 px-4 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 text-[11px] font-bold uppercase mb-4">
+                  {{ formSuccess }}
+                </div>
+              </Transition>
+            </div>
+
             <div class="md:col-span-12 flex justify-end gap-3 mt-2">
               <button type="button" @click="cancelForm" class="btn-ghost">{{ t('admin.cancel') || 'Cancel' }}</button>
               <button type="submit" :disabled="formLoading" class="btn-primary min-w-[120px] h-10 text-[11px] font-black uppercase tracking-widest">
@@ -317,3 +329,11 @@ async function handleDelete() {
     />
   </div>
 </template>
+
+<style scoped>
+.slide-form-enter-active, .slide-form-leave-active { transition: all 0.3s ease; }
+.slide-form-enter-from, .slide-form-leave-to { opacity: 0; transform: translateY(-20px); }
+
+.banner-enter-active, .banner-leave-active { transition: all 0.2s ease; }
+.banner-enter-from, .banner-leave-to { opacity: 0; transform: scale(0.95); }
+</style>

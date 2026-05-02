@@ -21,12 +21,14 @@ async function initScores() {
   const targetRound = league.activeRound || (league.rounds.length > 0 ? league.rounds[0] : null)
   
   if (targetRound) {
+    // Parallel fetch for data
     await Promise.all([
       league.fetchTeams(league.selectedGender),
       league.fetchMatches(targetRound.id)
     ])
-    // Note: Real-time subscriptions are temporarily disabled during migration
-      league.subscribeToMatches(targetRound.id)
+    
+    // Non-blocking socket subscription
+    league.subscribeToMatches(targetRound.id)
   } else {
     await league.fetchTeams(league.selectedGender)
     league.clearMatches()

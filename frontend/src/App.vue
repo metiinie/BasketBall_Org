@@ -15,8 +15,17 @@ const isUrlMissing = ref(
   import.meta.env.VITE_SUPABASE_URL === 'https://placeholder.supabase.co'
 )
 const isKeyMissing = ref(!import.meta.env.VITE_SUPABASE_ANON_KEY)
-const isApiLocal = ref(import.meta.env.VITE_API_URL?.includes('localhost') || !import.meta.env.VITE_API_URL)
-const isConfigMissing = ref(isUrlMissing.value || isKeyMissing.value || isApiLocal.value)
+const isApiLocal = ref(import.meta.env.VITE_API_URL?.includes('localhost'))
+const isApiMissing = ref(!import.meta.env.VITE_API_URL)
+
+// Only block the app if essential Supabase keys are missing.
+// If the API is local, we only block if we are in production mode.
+const isConfigMissing = ref(
+  isUrlMissing.value || 
+  isKeyMissing.value || 
+  (isApiMissing.value) ||
+  (isApiLocal.value && import.meta.env.PROD)
+)
 
 // Debug log to help the user see what's happening in the console
 console.log('[EBF] Backend URL:', import.meta.env.VITE_API_URL || 'http://localhost:3000 (Fallback)')

@@ -72,9 +72,7 @@ watch(selectedRoundId, async (newId) => {
   else league.clearMatches()
 })
 
-const filteredTeams = computed(() =>
-  league.teams.filter(t => t.gender === league.selectedGender)
-)
+const filteredTeams = computed(() => league.filteredTeams)
 
 const recentSchedules = computed(() =>
   league.matches

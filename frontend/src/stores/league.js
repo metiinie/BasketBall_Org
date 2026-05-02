@@ -17,6 +17,25 @@ export const useLeagueStore = defineStore('league', () => {
   const selectedGender = ref('ወንድ')
   const selectedSeason = ref(2025)
 
+  // Helper to normalize gender from DB (MALE/FEMALE) to UI (ወንድ/ሴት)
+  const normalizeGender = (g) => {
+    if (g === 'MALE' || g === 'ወንድ') return 'ወንድ'
+    if (g === 'FEMALE' || g === 'ሴት') return 'ሴት'
+    return g
+  }
+
+  // Computed teams normalized and filtered by current selectedGender
+  const normalizedTeams = computed(() => {
+    return teams.value.map(t => ({
+      ...t,
+      gender: normalizeGender(t.gender)
+    }))
+  })
+
+  const filteredTeams = computed(() => {
+    return normalizedTeams.value.filter(t => t.gender === selectedGender.value)
+  })
+
   // ─── Storage ─────────────────────────────────────────────────────────────
 
   /**
@@ -472,7 +491,7 @@ export const useLeagueStore = defineStore('league', () => {
 
   return {
     teams, rounds, activeRound, matches, cumulativeMatches, standings, cumulativeStandings, loading, error,
-    selectedGender, selectedSeason,
+    selectedGender, selectedSeason, normalizedTeams, filteredTeams,
     fetchTeams, createTeam, updateTeam, deleteTeam,
     fetchRounds, createRound, setActiveRound,
     fetchMatches, fetchCumulativeMatches, createMatch, updateMatch, deleteMatch,
