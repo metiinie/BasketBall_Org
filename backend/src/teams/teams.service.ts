@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { TeamGender } from '@prisma/client';
@@ -69,6 +69,11 @@ export class TeamsService {
   }
 
   async remove(id: string, userId?: string) {
+    const existing = await this.prisma.team.findUnique({ where: { id } });
+    if (!existing) {
+      throw new NotFoundException(`Team ${id} not found — it may have already been deleted.`);
+    }
+
     const team = await this.prisma.team.delete({
       where: { id },
     });

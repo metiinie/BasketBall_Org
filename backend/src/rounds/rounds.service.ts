@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { RoundStatus, TeamGender } from '@prisma/client';
@@ -92,6 +92,11 @@ export class RoundsService {
   }
 
   async remove(id: string, userId?: string) {
+    const existing = await this.prisma.round.findUnique({ where: { id } });
+    if (!existing) {
+      throw new NotFoundException(`Round ${id} not found — it may have already been deleted.`);
+    }
+
     const round = await this.prisma.round.delete({
       where: { id },
     });

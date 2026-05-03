@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import NBAGameCard from '@/components/NBAGameCard.vue'
 import RoundSelector from '@/components/RoundSelector.vue'
@@ -27,8 +27,23 @@ async function onRoundChange(id) {
   if (!id || id === 'global') return
   selectedRound.value = id
   await league.fetchMatches(id)
-  league.subscribeToMatches(id)
+  league.subscribeToMatches(id)  // off+on handled inside subscribeToMatches
 }
+
+// Re-initialize when global gender/season filter changes
+watch([() => league.selectedGender, () => league.selectedSeason], async () => {
+  league.clearMatches()
+  selectedRound.value = null
+  await league.fetchRounds(league.selectedSeason)
+  if (league.activeRound) selectedRound.value = league.activeRound.id
+  else if (league.rounds.length > 0) selectedRound.value = league.rounds[0].id
+  if (selectedRound.value) {
+    await league.fetchMatches(selectedRound.value)
+    league.subscribeToMatches(selectedRound.value)
+  }
+})
+
+onUnmounted(() => league.unsubscribeFromMatches())
 
 const matchesByDate = computed(() => {
   const list = filter.value === 'All' ? league.matches : 

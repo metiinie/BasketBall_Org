@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { MatchGateway } from './match.gateway';
@@ -104,6 +104,14 @@ export class MatchesService {
   }
 
   async remove(id: string, userId?: string) {
+    // Check existence first to return a clean 404 rather than a raw Prisma P2025 → 500.
+    // This can happen when the UI renders duplicate match cards (same id) and the user
+    // clicks delete on the stale duplicate after the first delete already succeeded.
+    const existing = await this.prisma.match.findUnique({ where: { id } });
+    if (!existing) {
+      throw new NotFoundException(`Match ${id} not found — it may have already been deleted.`);
+    }
+
     const match = await this.prisma.match.delete({
       where: { id },
     });

@@ -212,9 +212,16 @@ export const useLeagueStore = defineStore('league', () => {
   async function createMatch(payload) {
     const response = await api.post('/matches', payload)
     const data = response.data
-    
-    if (matches.value.length > 0 && matches.value[0].round_id === data.round_id) {
-       matches.value.push(data)
+
+    // Guard: the WebSocket 'matchUpdated' broadcast may have already inserted
+    // this match before the HTTP response resolves, causing duplicate keys.
+    // Only push if this ID is not already present in local state.
+    const alreadyPresent = matches.value.some(m => m.id === data.id)
+    if (!alreadyPresent && matches.value.length > 0 && matches.value[0].round_id === data.round_id) {
+      matches.value.push(data)
+    } else if (!alreadyPresent && matches.value.length === 0) {
+      // Empty list — safe to push regardless (no round_id reference to compare)
+      matches.value.push(data)
     }
     return data
   }
@@ -275,6 +282,12 @@ export const useLeagueStore = defineStore('league', () => {
     
     connectSocket()
     
+    // Always remove the previous listener before adding a new one.
+    // Without this, every call to subscribeToMatches() (e.g. on round change or
+    // re-mount) stacks a fresh listener on top of old ones — causing each
+    // WebSocket event to fire N times and push N duplicate entries into matches.value.
+    socket.off('matchUpdated')
+    
     // Join the specific round room
     socket.emit('joinRound', roundId)
 
@@ -284,7 +297,9 @@ export const useLeagueStore = defineStore('league', () => {
       if (idx !== -1) {
         matches.value[idx] = updatedMatch
       } else if (matches.value.length > 0 && matches.value[0].round_id === updatedMatch.round_id) {
-        matches.value.push(updatedMatch)
+        // Only push if this match isn't already present (createMatch HTTP response guard)
+        const alreadyPresent = matches.value.some(m => m.id === updatedMatch.id)
+        if (!alreadyPresent) matches.value.push(updatedMatch)
       }
     })
   }
