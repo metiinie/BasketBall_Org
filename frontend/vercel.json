@@ -1,3 +1,9 @@
 {
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+  "redirects": [
+    {
+      "source": "/",
+      "destination": "https://basket-ball-org.vercel.app",
+      "permanent": false
+    }
+  ]
 }
