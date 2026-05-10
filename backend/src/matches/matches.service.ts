@@ -123,6 +123,8 @@ export class MatchesService {
       details: { home_team_id: match.home_team_id, away_team_id: match.away_team_id },
     });
 
+    this.matchGateway.broadcastMatchDelete(match.round_id, id);
+
     return match;
   }
 }

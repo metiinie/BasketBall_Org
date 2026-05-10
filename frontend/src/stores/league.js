@@ -261,6 +261,7 @@ export const useLeagueStore = defineStore('league', () => {
   async function deleteMatch(id) {
     await api.delete(`/matches/${id}`)
     matches.value = matches.value.filter(m => m.id !== id)
+    cumulativeMatches.value = cumulativeMatches.value.filter(m => m.id !== id)
   }
 
   async function fetchMatches(roundId) {
@@ -287,6 +288,7 @@ export const useLeagueStore = defineStore('league', () => {
     // re-mount) stacks a fresh listener on top of old ones — causing each
     // WebSocket event to fire N times and push N duplicate entries into matches.value.
     socket.off('matchUpdated')
+    socket.off('matchDeleted')
     
     // Join the specific round room
     socket.emit('joinRound', roundId)
@@ -302,10 +304,17 @@ export const useLeagueStore = defineStore('league', () => {
         if (!alreadyPresent) matches.value.push(updatedMatch)
       }
     })
+
+    // Listen for deletions
+    socket.on('matchDeleted', (matchId) => {
+      matches.value = matches.value.filter(m => m.id !== matchId)
+      cumulativeMatches.value = cumulativeMatches.value.filter(m => m.id !== matchId)
+    })
   }
 
   function unsubscribeFromMatches() {
     socket.off('matchUpdated')
+    socket.off('matchDeleted')
   }
 
   // ─── Optimistic Updates & Offline Resiliency ─────────────────────────────

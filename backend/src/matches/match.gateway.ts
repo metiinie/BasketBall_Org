@@ -28,4 +28,8 @@ export class MatchGateway implements OnGatewayConnection, OnGatewayDisconnect {
   broadcastMatchUpdate(roundId: string, match: any) {
     this.server.to(`round_${roundId}`).emit('matchUpdated', match);
   }
+
+  broadcastMatchDelete(roundId: string, matchId: string) {
+    this.server.to(`round_${roundId}`).emit('matchDeleted', matchId);
+  }
 }

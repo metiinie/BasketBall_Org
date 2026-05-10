@@ -78,7 +78,7 @@ const recentSchedules = computed(() =>
   league.matches
     .filter(m => m.status === 'Pending' || m.status === 'Scheduled' || m.status === 'Completed')
     .sort((a,b) => new Date(b.match_date) - new Date(a.match_date))
-    .slice(0, 8)
+    .slice(0, 25)
 )
 
 async function scheduleMatch() {
@@ -372,7 +372,7 @@ const formatMatchDate = (d) => d ? formatEthiopian(d) : '—'
             <p class="text-xs font-bold uppercase tracking-widest" style="color: var(--text-secondary);">{{ t('admin.recent_fixtures') }}</p>
           </div>
 
-          <div class="flex-1 divide-y" style="border-color: var(--border);">
+          <div class="flex-1 divide-y overflow-y-auto max-h-[700px] scrollbar-hide" style="border-color: var(--border);">
             <div v-for="match in recentSchedules" :key="match.id" class="px-5 py-3.5 hover:bg-slate-500/5 transition-colors">
               <div class="flex items-center justify-between mb-1.5">
                 <div class="flex items-center gap-1.5">
