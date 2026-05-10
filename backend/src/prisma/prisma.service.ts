@@ -8,7 +8,6 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
     while (retries > 0) {
       try {
         await this.$connect();
-        console.log('Successfully connected to the database');
         break;
       } catch (err) {
         retries -= 1;
